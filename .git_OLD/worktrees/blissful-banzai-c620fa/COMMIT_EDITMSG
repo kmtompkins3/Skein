@@ -1,0 +1,31 @@
+Add iOS native Swift source files (Phases 1–9)
+
+Creates ios/NFCStitchClip/ with complete Swift/SwiftUI implementation:
+
+Models (SwiftData):
+- Project, Tag, WriteEvent @Model classes with cascade delete rules
+- Project.estimatedWorkTime: write-to-write algorithm, 12-hr threshold
+- NFCTagPayload: Codable struct for JSON NDEF tag encoding/decoding
+
+Services:
+- NFCService: ObservableObject wrapping NFCNDEFReaderSession for both
+  read (invalidateAfterFirstRead: true) and write modes; no partial state
+  on failure
+- ImageStorageService: JPEG save/load/delete under Documents/images/
+
+Views:
+- HomeView: project list with @Query, global Scan Tag button, swipe-to-delete
+- ProjectRowView, ProjectDetailView (Tags + History tabs)
+- TagsTabView / TagRowView: enumerated labels, swipe-to-delete
+- WriteTagView: shared add/update flow; SwiftData only committed on NFC success
+- HistoryTabView: chronological write-event log with elapsed-time per entry
+- ScanResultModal: known-project scan result sheet
+- OrphanedTagModal + ProjectPickerView: re-linking flow preserving firstWriteAt
+- CreateProjectView: PhotosPicker + URL validation
+
+Entitlement: com.apple.developer.nfc.readersession.formats = NDEF
+
+Next: create Xcode project, add Info.plist NFCReaderUsageDescription,
+wire files into target, test on physical iPhone (NFC unavailable on Simulator).
+
+Co-Authored-By: claude-flow <ruv@ruv.net>

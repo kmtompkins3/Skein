@@ -1,0 +1,28 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/kmtompkins3/NFC_Stitch_Clip.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+[branch "claude/sharp-kapitsa-fffc6f"]
+	remote = origin
+	merge = refs/heads/main
+[extensions]
+	worktreeConfig = true
+[branch "claude/blissful-banzai-c620fa"]
+	remote = origin
+	merge = refs/heads/main
+[branch "ios-native"]
+	remote = origin
+	merge = refs/heads/ios-native
+[branch "claude/cool-newton-4dd7c3"]
+	remote = origin
+	merge = refs/heads/main

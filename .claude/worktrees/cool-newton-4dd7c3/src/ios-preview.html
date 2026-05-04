@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Skein iOS — Redesign Preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #EFEAE0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SHARED DESIGN TOKENS + COMPONENTS  (screens.jsx inlined)
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+const SKEIN = {
+  cream:    '#FAF6F0',
+  cream2:   '#F2EDE4',
+  cream3:   '#E8E1D4',
+  charcoal: '#1A1A1A',
+  charcoal2:'#2A2823',
+  ink:      '#3A352E',
+  muted:    '#7A7065',
+  hairline: '#E0D9CB',
+  tangerine:'#FF6B35',
+  mint:     '#9DD3C4',
+  pink:     '#FF3D7F',
+  champagne:'#D4A24C',
+};
+
+const FONT_DISPLAY = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+const FONT_MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+
+// ── Skein wordmark ──────────────────────────────────────────────
+function SkeinWordmark({ size = 22, color = SKEIN.charcoal, dot = SKEIN.tangerine }) {
+  return (
+    <span style={{
+      fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: size,
+      letterSpacing: '-0.025em', color, lineHeight: 1, display: 'inline-flex',
+      alignItems: 'baseline',
+    }}>
+      Ske
+      <span style={{ position: 'relative', display: 'inline-block' }}>
+        <span style={{ visibility: 'hidden' }}>i</span>
+        <span style={{
+          position: 'absolute', left: '50%', top: '0.18em',
+          width: size * 0.07, height: size * 0.62, background: color,
+          transform: 'translateX(-50%)', borderRadius: 1,
+        }}/>
+        <span style={{
+          position: 'absolute', left: '50%', top: '-0.06em',
+          width: size * 0.22, height: size * 0.22, background: dot,
+          transform: 'translateX(-50%)', borderRadius: '50%',
+        }}/>
+      </span>
+      n
+    </span>
+  );
+}
+
+// ── Icons ───────────────────────────────────────────────────────
+const Icon = {
+  plus: (s = 16, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+      <path d="M8 3v10M3 8h10" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  ),
+  scan: (s = 18, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill="none">
+      <path d="M3 7V4a1 1 0 011-1h3M17 7V4a1 1 0 00-1-1h-3M3 13v3a1 1 0 001 1h3M17 13v3a1 1 0 01-1 1h-3" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M7 10h6" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  ),
+  chevron: (s = 14, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none">
+      <path d="M5 3l4 4-4 4" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  back: (s = 18, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 18 18" fill="none">
+      <path d="M11 4l-5 5 5 5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  check: (s = 14, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none">
+      <path d="M3 7.5l3 3 5-6" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  more: (s = 18, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 18 18" fill="none">
+      <circle cx="4" cy="9" r="1.4" fill={c}/>
+      <circle cx="9" cy="9" r="1.4" fill={c}/>
+      <circle cx="14" cy="9" r="1.4" fill={c}/>
+    </svg>
+  ),
+  link: (s = 14, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none">
+      <path d="M6 8.5L8.5 6M5.5 9.5l-1 1a2 2 0 11-2.8-2.8l1-1M9.5 5.5l1-1a2 2 0 112.8 2.8l-1 1" stroke={c} strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  ),
+  wave: (s = 18, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill="none">
+      <path d="M5 7c1.4-1.5 3-2.2 5-2.2s3.6.7 5 2.2M3 4.5c2-2 4.4-3 7-3s5 1 7 3" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="10" cy="13" r="2" fill={c}/>
+    </svg>
+  ),
+  photo: (s = 18, c = 'currentColor') => (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill="none">
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" stroke={c} strokeWidth="1.4"/>
+      <circle cx="7" cy="8" r="1.2" fill={c}/>
+      <path d="M3 14l4-4 5 4 2-2 3 3" stroke={c} strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+    </svg>
+  ),
+};
+
+// ── Yarn texture placeholder ────────────────────────────────────
+function YarnPlaceholder({ size = 56, hue = SKEIN.mint, label }) {
+  const id = React.useId();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 12, overflow: 'hidden',
+      position: 'relative', flexShrink: 0, background: hue,
+    }}>
+      <svg width="100%" height="100%" viewBox="0 0 56 56" preserveAspectRatio="none">
+        <defs>
+          <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+            <rect width="6" height="6" fill={hue}/>
+            <rect width="3" height="6" fill="rgba(0,0,0,0.08)"/>
+          </pattern>
+        </defs>
+        <rect width="56" height="56" fill={`url(#${id})`}/>
+      </svg>
+      {label && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          fontFamily: FONT_MONO, fontSize: 9, color: 'rgba(0,0,0,0.55)',
+          fontWeight: 600, letterSpacing: '0.06em',
+        }}>{label}</div>
+      )}
+    </div>
+  );
+}
+
+// ── Status bar ──────────────────────────────────────────────────
+function StatusBar({ dark = false }) {
+  const c = dark ? '#fff' : SKEIN.charcoal;
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '14px 26px 6px', height: 44, fontFamily: FONT_DISPLAY,
+    }}>
+      <span style={{ fontWeight: 600, fontSize: 15, color: c, letterSpacing: '-0.01em' }}>9:41</span>
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+        <svg width="17" height="11" viewBox="0 0 17 11">
+          <rect x="0" y="6.5" width="2.8" height="4" rx="0.6" fill={c}/>
+          <rect x="4.2" y="4.3" width="2.8" height="6.2" rx="0.6" fill={c}/>
+          <rect x="8.4" y="2.1" width="2.8" height="8.4" rx="0.6" fill={c}/>
+          <rect x="12.6" y="0" width="2.8" height="10.5" rx="0.6" fill={c}/>
+        </svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" style={{ marginLeft: 2 }}>
+          <path d="M7.5 2.7c2 0 3.8.8 5.1 2.1l.95-.95C12 2.4 9.85 1.4 7.5 1.4S3 2.4 1.45 3.85l.95.95C3.7 3.5 5.5 2.7 7.5 2.7z" fill={c}/>
+          <path d="M7.5 5.7c1.2 0 2.3.4 3.1 1.2l.95-.95c-1.1-1.1-2.5-1.7-4.05-1.7s-2.95.6-4.05 1.7l.95.95C5.2 6.1 6.3 5.7 7.5 5.7z" fill={c}/>
+          <circle cx="7.5" cy="9" r="1.3" fill={c}/>
+        </svg>
+        <svg width="24" height="11" viewBox="0 0 24 11" style={{ marginLeft: 4 }}>
+          <rect x="0.5" y="0.5" width="20" height="10" rx="2.6" stroke={c} strokeOpacity="0.4" fill="none"/>
+          <rect x="2" y="2" width="17" height="7" rx="1.4" fill={c}/>
+          <path d="M22 3.5v4c.7-.2 1.3-1 1.3-2s-.6-1.8-1.3-2z" fill={c} fillOpacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// ── Phone frame ─────────────────────────────────────────────────
+function Phone({ children, bg = SKEIN.cream }) {
+  return (
+    <div style={{
+      width: 390, height: 844, borderRadius: 56, overflow: 'hidden',
+      background: bg, position: 'relative',
+      boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset, 0 0 0 8px #2A2823, 0 30px 60px -20px rgba(26,26,26,0.35), 0 12px 24px -8px rgba(26,26,26,0.18)',
+      fontFamily: FONT_DISPLAY, color: SKEIN.charcoal,
+    }}>
+      {/* Dynamic island */}
+      <div style={{
+        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+        width: 124, height: 36, borderRadius: 22, background: '#000', zIndex: 30,
+      }}/>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
+      {/* Home indicator */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        width: 134, height: 5, borderRadius: 3, background: SKEIN.charcoal, opacity: 0.85,
+      }}/>
+    </div>
+  );
+}
+
+function SectionHead({ children, style = {} }) {
+  return (
+    <div style={{
+      fontFamily: FONT_MONO, fontSize: 10.5, fontWeight: 600,
+      letterSpacing: '0.18em', color: SKEIN.muted, textTransform: 'uppercase',
+      padding: '0 24px 10px', ...style,
+    }}>{children}</div>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DESIGN CANVAS  (design-canvas.jsx inlined)
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+const DC = {
+  bg: '#f0eee9',
+  grid: 'rgba(0,0,0,0.06)',
+  label: 'rgba(60,50,40,0.7)',
+  title: 'rgba(40,30,20,0.85)',
+  subtitle: 'rgba(60,50,40,0.6)',
+  font: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+};
+
+if (typeof document !== 'undefined' && !document.getElementById('dc-styles')) {
+  const s = document.createElement('style');
+  s.id = 'dc-styles';
+  s.textContent = [
+    '.dc-editable{cursor:text;outline:none;white-space:nowrap;border-radius:3px;padding:0 2px;margin:0 -2px}',
+    '.dc-editable:focus{background:#fff;box-shadow:0 0 0 1.5px #c96442}',
+    '[data-dc-slot]{transition:transform .18s cubic-bezier(.2,.7,.3,1)}',
+    '[data-dc-slot].dc-dragging{transition:none;z-index:10;pointer-events:none}',
+    '[data-dc-slot].dc-dragging .dc-card{box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 2px #c96442;transform:scale(1.02)}',
+    '.dc-card{transition:box-shadow .15s,transform .15s}',
+    '.dc-card *{scrollbar-width:none}',
+    '.dc-card *::-webkit-scrollbar{display:none}',
+    '.dc-labelrow{display:flex;align-items:center;gap:4px;height:24px}',
+    '.dc-grip{cursor:grab;display:flex;align-items:center;padding:5px 4px;border-radius:4px;transition:background .12s}',
+    '.dc-grip:hover{background:rgba(0,0,0,.08)}',
+    '.dc-grip:active{cursor:grabbing}',
+    '.dc-labeltext{cursor:pointer;border-radius:4px;padding:3px 6px;display:flex;align-items:center;transition:background .12s}',
+    '.dc-labeltext:hover{background:rgba(0,0,0,.05)}',
+    '.dc-expand{position:absolute;bottom:100%;right:0;margin-bottom:5px;z-index:2;opacity:0;transition:opacity .12s,background .12s;',
+    '  width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;padding:0;',
+    '  background:transparent;color:rgba(60,50,40,.7);display:flex;align-items:center;justify-content:center}',
+    '.dc-expand:hover{background:rgba(0,0,0,.06);color:#2a251f}',
+    '[data-dc-slot]:hover .dc-expand{opacity:1}',
+  ].join('\n');
+  document.head.appendChild(s);
+}
+
+const DCCtx = React.createContext(null);
+
+const DC_STATE_FILE = '.design-canvas.state.json';
+
+function DesignCanvas({ children, title, subtitle, bg, minScale, maxScale, style }) {
+  const [state, setState] = React.useState({ sections: {}, focus: null });
+  const [ready, setReady] = React.useState(false);
+  const didRead = React.useRef(false);
+  const skipNextWrite = React.useRef(false);
+
+  React.useEffect(() => {
+    let off = false;
+    fetch('./' + DC_STATE_FILE)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((saved) => {
+        if (off || !saved || !saved.sections) return;
+        skipNextWrite.current = true;
+        setState((s) => ({ ...s, sections: saved.sections }));
+      })
+      .catch(() => {})
+      .finally(() => { didRead.current = true; if (!off) setReady(true); });
+    const t = setTimeout(() => { if (!off) setReady(true); }, 150);
+    return () => { off = true; clearTimeout(t); };
+  }, []);
+
+  React.useEffect(() => {
+    if (!didRead.current) return;
+    if (skipNextWrite.current) { skipNextWrite.current = false; return; }
+    const t = setTimeout(() => {
+      window.omelette?.writeFile(DC_STATE_FILE, JSON.stringify({ sections: state.sections })).catch(() => {});
+    }, 250);
+    return () => clearTimeout(t);
+  }, [state.sections]);
+
+  const registry = {};
+  const sectionMeta = {};
+  const sectionOrder = [];
+  React.Children.forEach(children, (sec) => {
+    if (!sec || sec.type !== DCSection) return;
+    const sid = sec.props.id ?? sec.props.title;
+    if (!sid) return;
+    sectionOrder.push(sid);
+    const persisted = state.sections[sid] || {};
+    const srcIds = [];
+    React.Children.forEach(sec.props.children, (ab) => {
+      if (!ab || ab.type !== DCArtboard) return;
+      const aid = ab.props.id ?? ab.props.label;
+      if (!aid) return;
+      registry[`${sid}/${aid}`] = { sectionId: sid, artboard: ab };
+      srcIds.push(aid);
+    });
+    const kept = (persisted.order || []).filter((k) => srcIds.includes(k));
+    sectionMeta[sid] = {
+      title: persisted.title ?? sec.props.title,
+      subtitle: sec.props.subtitle,
+      slotIds: [...kept, ...srcIds.filter((k) => !kept.includes(k))],
+    };
+  });
+
+  const api = React.useMemo(() => ({
+    state,
+    section: (id) => state.sections[id] || {},
+    patchSection: (id, p) => setState((s) => ({
+      ...s,
+      sections: { ...s.sections, [id]: { ...s.sections[id], ...(typeof p === 'function' ? p(s.sections[id] || {}) : p) } },
+    })),
+    setFocus: (slotId) => setState((s) => ({ ...s, focus: slotId })),
+  }), [state]);
+
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') api.setFocus(null); };
+    const onPd = (e) => {
+      const ae = document.activeElement;
+      if (ae && ae.isContentEditable && !ae.contains(e.target)) ae.blur();
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPd, true);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPd, true);
+    };
+  }, [api]);
+
+  return (
+    <DCCtx.Provider value={api}>
+      <DCViewport minScale={minScale} maxScale={maxScale} style={style} bg={bg}
+        title={title} subtitle={subtitle}>
+        {ready && children}
+      </DCViewport>
+      {state.focus && registry[state.focus] && (
+        <DCFocusOverlay entry={registry[state.focus]} sectionMeta={sectionMeta} sectionOrder={sectionOrder} />
+      )}
+    </DCCtx.Provider>
+  );
+}
+
+function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {}, bg, title, subtitle }) {
+  const vpRef = React.useRef(null);
+  const worldRef = React.useRef(null);
+  const tf = React.useRef({ x: 0, y: 0, scale: 1 });
+
+  const apply = React.useCallback(() => {
+    const { x, y, scale } = tf.current;
+    const el = worldRef.current;
+    if (el) el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+  }, []);
+
+  React.useEffect(() => {
+    const vp = vpRef.current;
+    if (!vp) return;
+
+    const zoomAt = (cx, cy, factor) => {
+      const r = vp.getBoundingClientRect();
+      const px = cx - r.left, py = cy - r.top;
+      const t = tf.current;
+      const next = Math.min(maxScale, Math.max(minScale, t.scale * factor));
+      const k = next / t.scale;
+      t.x = px - (px - t.x) * k;
+      t.y = py - (py - t.y) * k;
+      t.scale = next;
+      apply();
+    };
+
+    const isMouseWheel = (e) =>
+      e.deltaMode !== 0 ||
+      (e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 40);
+
+    const onWheel = (e) => {
+      e.preventDefault();
+      if (isGesturing) return;
+      if (e.ctrlKey) {
+        zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.01));
+      } else if (isMouseWheel(e)) {
+        zoomAt(e.clientX, e.clientY, Math.exp(-Math.sign(e.deltaY) * 0.18));
+      } else {
+        tf.current.x -= e.deltaX;
+        tf.current.y -= e.deltaY;
+        apply();
+      }
+    };
+
+    let gsBase = 1;
+    let isGesturing = false;
+    const onGestureStart = (e) => { e.preventDefault(); isGesturing = true; gsBase = tf.current.scale; };
+    const onGestureChange = (e) => {
+      e.preventDefault();
+      zoomAt(e.clientX, e.clientY, (gsBase * e.scale) / tf.current.scale);
+    };
+    const onGestureEnd = (e) => { e.preventDefault(); isGesturing = false; };
+
+    let drag = null;
+    const onPointerDown = (e) => {
+      const onBg = !e.target.closest('[data-dc-slot], .dc-editable');
+      if (!(e.button === 1 || (e.button === 0 && onBg))) return;
+      e.preventDefault();
+      vp.setPointerCapture(e.pointerId);
+      drag = { id: e.pointerId, lx: e.clientX, ly: e.clientY };
+      vp.style.cursor = 'grabbing';
+    };
+    const onPointerMove = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      tf.current.x += e.clientX - drag.lx;
+      tf.current.y += e.clientY - drag.ly;
+      drag.lx = e.clientX; drag.ly = e.clientY;
+      apply();
+    };
+    const onPointerUp = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      vp.releasePointerCapture(e.pointerId);
+      drag = null;
+      vp.style.cursor = '';
+    };
+
+    vp.addEventListener('wheel', onWheel, { passive: false });
+    vp.addEventListener('gesturestart', onGestureStart, { passive: false });
+    vp.addEventListener('gesturechange', onGestureChange, { passive: false });
+    vp.addEventListener('gestureend', onGestureEnd, { passive: false });
+    vp.addEventListener('pointerdown', onPointerDown);
+    vp.addEventListener('pointermove', onPointerMove);
+    vp.addEventListener('pointerup', onPointerUp);
+    vp.addEventListener('pointercancel', onPointerUp);
+    return () => {
+      vp.removeEventListener('wheel', onWheel);
+      vp.removeEventListener('gesturestart', onGestureStart);
+      vp.removeEventListener('gesturechange', onGestureChange);
+      vp.removeEventListener('gestureend', onGestureEnd);
+      vp.removeEventListener('pointerdown', onPointerDown);
+      vp.removeEventListener('pointermove', onPointerMove);
+      vp.removeEventListener('pointerup', onPointerUp);
+      vp.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, [apply, minScale, maxScale]);
+
+  const canvasBg = bg || DC.bg;
+  const gridSvg = `url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M120 0H0v120' fill='none' stroke='${encodeURIComponent(DC.grid)}' stroke-width='1'/%3E%3C/svg%3E")`;
+
+  return (
+    <div ref={vpRef} style={{
+      height: '100vh', width: '100vw',
+      background: canvasBg,
+      backgroundImage: gridSvg,
+      backgroundSize: '120px 120px',
+      overflow: 'hidden',
+      overscrollBehavior: 'none',
+      touchAction: 'none',
+      position: 'relative',
+      fontFamily: DC.font,
+      boxSizing: 'border-box',
+      ...style,
+    }}>
+      {/* Canvas header */}
+      {(title || subtitle) && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5,
+          padding: '18px 28px 14px',
+          background: `linear-gradient(to bottom, ${canvasBg} 70%, transparent)`,
+          pointerEvents: 'none',
+        }}>
+          {title && <div style={{ fontSize: 17, fontWeight: 700, color: DC.title, letterSpacing: -0.3 }}>{title}</div>}
+          {subtitle && <div style={{ fontSize: 12, color: DC.subtitle, marginTop: 2 }}>{subtitle}</div>}
+        </div>
+      )}
+      <div ref={worldRef} style={{
+        position: 'absolute', top: 0, left: 0,
+        transformOrigin: '0 0',
+        willChange: 'transform',
+        width: 'max-content', minWidth: '100%',
+        minHeight: '100%',
+        padding: '80px 0 80px',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DCSection({ id, title, subtitle, children, gap = 48 }) {
+  const ctx = React.useContext(DCCtx);
+  const sid = id ?? title;
+  const all = React.Children.toArray(children);
+  const artboards = all.filter((c) => c && c.type === DCArtboard);
+  const rest = all.filter((c) => !(c && c.type === DCArtboard));
+  const srcOrder = artboards.map((a) => a.props.id ?? a.props.label);
+  const sec = (ctx && sid && ctx.section(sid)) || {};
+
+  const order = React.useMemo(() => {
+    const kept = (sec.order || []).filter((k) => srcOrder.includes(k));
+    return [...kept, ...srcOrder.filter((k) => !kept.includes(k))];
+  }, [sec.order, srcOrder.join('|')]);
+
+  const byId = Object.fromEntries(artboards.map((a) => [a.props.id ?? a.props.label, a]));
+
+  return (
+    <div data-dc-section={sid} style={{ marginBottom: 80, position: 'relative' }}>
+      <div style={{ padding: '0 60px 40px' }}>
+        <DCEditable tag="div" value={sec.title ?? title}
+          onChange={(v) => ctx && sid && ctx.patchSection(sid, { title: v })}
+          style={{ fontSize: 28, fontWeight: 600, color: DC.title, letterSpacing: -0.4, marginBottom: 6, display: 'inline-block' }} />
+        {subtitle && <div style={{ fontSize: 16, color: DC.subtitle }}>{subtitle}</div>}
+      </div>
+      <div style={{ display: 'flex', gap, padding: '0 60px', alignItems: 'flex-start', width: 'max-content' }}>
+        {order.map((k) => (
+          <DCArtboardFrame key={k} sectionId={sid} artboard={byId[k]} order={order}
+            label={(sec.labels || {})[k] ?? byId[k].props.label}
+            onRename={(v) => ctx && ctx.patchSection(sid, (x) => ({ labels: { ...x.labels, [k]: v } }))}
+            onReorder={(next) => ctx && ctx.patchSection(sid, { order: next })}
+            onFocus={() => ctx && ctx.setFocus(`${sid}/${k}`)} />
+        ))}
+      </div>
+      {rest}
+    </div>
+  );
+}
+
+function DCArtboard() { return null; }
+
+function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorder, onFocus }) {
+  const { id: rawId, label: rawLabel, width = 260, height = 480, children, style = {} } = artboard.props;
+  const id = rawId ?? rawLabel;
+  const ref = React.useRef(null);
+
+  const onGripDown = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const me = ref.current;
+    const scale = me.getBoundingClientRect().width / me.offsetWidth || 1;
+    const peers = Array.from(document.querySelectorAll(`[data-dc-section="${sectionId}"] [data-dc-slot]`));
+    const homes = peers.map((el) => ({ el, id: el.dataset.dcSlot, x: el.getBoundingClientRect().left }));
+    const slotXs = homes.map((h) => h.x);
+    const startIdx = order.indexOf(id);
+    const startX = e.clientX;
+    let liveOrder = order.slice();
+    me.classList.add('dc-dragging');
+
+    const layout = () => {
+      for (const h of homes) {
+        if (h.id === id) continue;
+        const slot = liveOrder.indexOf(h.id);
+        h.el.style.transform = `translateX(${(slotXs[slot] - h.x) / scale}px)`;
+      }
+    };
+
+    const move = (ev) => {
+      const dx = ev.clientX - startX;
+      me.style.transform = `translateX(${dx / scale}px)`;
+      const cur = homes[startIdx].x + dx;
+      let nearest = 0, best = Infinity;
+      for (let i = 0; i < slotXs.length; i++) {
+        const d = Math.abs(slotXs[i] - cur);
+        if (d < best) { best = d; nearest = i; }
+      }
+      if (liveOrder.indexOf(id) !== nearest) {
+        liveOrder = order.filter((k) => k !== id);
+        liveOrder.splice(nearest, 0, id);
+        layout();
+      }
+    };
+
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      const finalSlot = liveOrder.indexOf(id);
+      me.classList.remove('dc-dragging');
+      me.style.transform = `translateX(${(slotXs[finalSlot] - homes[startIdx].x) / scale}px)`;
+      setTimeout(() => {
+        for (const h of homes) { h.el.style.transition = 'none'; h.el.style.transform = ''; }
+        if (liveOrder.join('|') !== order.join('|')) onReorder(liveOrder);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          for (const h of homes) h.el.style.transition = '';
+        }));
+      }, 180);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  };
+
+  return (
+    <div ref={ref} data-dc-slot={id} style={{ position: 'relative', flexShrink: 0 }}>
+      <div className="dc-labelrow" style={{ position: 'absolute', bottom: '100%', left: -4, marginBottom: 4, color: DC.label }}>
+        <div className="dc-grip" onPointerDown={onGripDown} title="Drag to reorder">
+          <svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor">
+            <circle cx="2" cy="2" r="1.1"/><circle cx="7" cy="2" r="1.1"/>
+            <circle cx="2" cy="6.5" r="1.1"/><circle cx="7" cy="6.5" r="1.1"/>
+            <circle cx="2" cy="11" r="1.1"/><circle cx="7" cy="11" r="1.1"/>
+          </svg>
+        </div>
+        <div className="dc-labeltext" onClick={onFocus} title="Click to focus">
+          <DCEditable value={label} onChange={onRename} onClick={(e) => e.stopPropagation()}
+            style={{ fontSize: 15, fontWeight: 500, color: DC.label, lineHeight: 1 }} />
+        </div>
+      </div>
+      <button className="dc-expand" onClick={onFocus} onPointerDown={(e) => e.stopPropagation()} title="Focus">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          <path d="M7 1h4v4M5 11H1V7M11 1L7.5 4.5M1 11l3.5-3.5"/>
+        </svg>
+      </button>
+      <div className="dc-card"
+        style={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)', overflow: 'hidden', width, height, background: '#fff', ...style }}>
+        {children || (
+          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 13, fontFamily: DC.font }}>{id}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DCEditable({ value, onChange, style, tag = 'span', onClick }) {
+  const T = tag;
+  return (
+    <T className="dc-editable" contentEditable suppressContentEditableWarning
+      onClick={onClick}
+      onPointerDown={(e) => e.stopPropagation()}
+      onBlur={(e) => onChange && onChange(e.currentTarget.textContent)}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
+      style={style}>{value}</T>
+  );
+}
+
+function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
+  const ctx = React.useContext(DCCtx);
+  const { sectionId, artboard } = entry;
+  const sec = ctx.section(sectionId);
+  const meta = sectionMeta[sectionId];
+  const peers = meta.slotIds;
+  const aid = artboard.props.id ?? artboard.props.label;
+  const idx = peers.indexOf(aid);
+  const secIdx = sectionOrder.indexOf(sectionId);
+
+  const go = (d) => { const n = peers[(idx + d + peers.length) % peers.length]; if (n) ctx.setFocus(`${sectionId}/${n}`); };
+  const goSection = (d) => {
+    const ns = sectionOrder[(secIdx + d + sectionOrder.length) % sectionOrder.length];
+    const first = sectionMeta[ns] && sectionMeta[ns].slotIds[0];
+    if (first) ctx.setFocus(`${ns}/${first}`);
+  };
+
+  React.useEffect(() => {
+    const k = (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); goSection(-1); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); goSection(1); }
+    };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  });
+
+  const { width = 260, height = 480, children } = artboard.props;
+  const [vp, setVp] = React.useState({ w: window.innerWidth, h: window.innerHeight });
+  React.useEffect(() => {
+    const r = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', r);
+    return () => window.removeEventListener('resize', r);
+  }, []);
+  const scale = Math.max(0.1, Math.min((vp.w - 200) / width, (vp.h - 260) / height, 2));
+
+  const [ddOpen, setDd] = React.useState(false);
+  const Arrow = ({ dir, onClick: handleClick }) => (
+    <button onClick={(e) => { e.stopPropagation(); handleClick(); }}
+      style={{
+        position: 'absolute', top: '50%', [dir]: 28, transform: 'translateY(-50%)',
+        border: 'none', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)',
+        width: 44, height: 44, borderRadius: 22, fontSize: 18, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,.18)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,.08)')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d={dir === 'left' ? 'M11 3L5 9l6 6' : 'M7 3l6 6-6 6'}/>
+      </svg>
+    </button>
+  );
+
+  return ReactDOM.createPortal(
+    <div onClick={() => ctx.setFocus(null)}
+      onWheel={(e) => e.preventDefault()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(24,20,16,.6)',
+        backdropFilter: 'blur(14px)', fontFamily: DC.font, color: '#fff',
+      }}>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 72, display: 'flex', alignItems: 'flex-start', padding: '16px 20px 0', gap: 16 }}>
+        <div style={{ position: 'relative' }}>
+          <button onClick={() => setDd((o) => !o)}
+            style={{ border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', padding: '6px 8px', borderRadius: 6, textAlign: 'left', fontFamily: 'inherit' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3 }}>{meta.title}</span>
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ opacity: .7 }}>
+                <path d="M2 4l3.5 3.5L9 4"/>
+              </svg>
+            </span>
+            {meta.subtitle && <span style={{ display: 'block', fontSize: 13, opacity: .6, fontWeight: 400, marginTop: 2 }}>{meta.subtitle}</span>}
+          </button>
+          {ddOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#2a251f', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,.4)', padding: 4, minWidth: 200, zIndex: 10 }}>
+              {sectionOrder.map((sid) => (
+                <button key={sid} onClick={() => { setDd(false); const f = sectionMeta[sid].slotIds[0]; if (f) ctx.setFocus(`${sid}/${f}`); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer', background: sid === sectionId ? 'rgba(255,255,255,.1)' : 'transparent', color: '#fff', padding: '8px 12px', borderRadius: 5, fontSize: 14, fontWeight: sid === sectionId ? 600 : 400, fontFamily: 'inherit' }}>
+                  {sectionMeta[sid].title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1 }}/>
+        <button onClick={() => ctx.setFocus(null)}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,.12)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          style={{ border: 'none', background: 'transparent', color: 'rgba(255,255,255,.7)', width: 32, height: 32, borderRadius: 16, fontSize: 20, cursor: 'pointer', lineHeight: 1, transition: 'background .12s' }}>×</button>
+      </div>
+
+      <div style={{ position: 'absolute', top: 64, bottom: 56, left: 100, right: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: width * scale, height: height * scale, position: 'relative' }}>
+          <div style={{ width, height, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff', borderRadius: 2, overflow: 'hidden', boxShadow: '0 20px 80px rgba(0,0,0,.4)' }}>
+            {children || <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb' }}>{aid}</div>}
+          </div>
+        </div>
+        <div onClick={(e) => e.stopPropagation()} style={{ fontSize: 14, fontWeight: 500, opacity: .85, textAlign: 'center' }}>
+          {(sec.labels || {})[aid] ?? artboard.props.label}
+          <span style={{ opacity: .5, marginLeft: 10, fontVariantNumeric: 'tabular-nums' }}>{idx + 1} / {peers.length}</span>
+        </div>
+      </div>
+
+      <Arrow dir="left" onClick={() => go(-1)}/>
+      <Arrow dir="right" onClick={() => go(1)}/>
+
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+        {peers.map((p, i) => (
+          <button key={p} onClick={() => ctx.setFocus(`${sectionId}/${p}`)}
+            style={{ border: 'none', padding: 0, cursor: 'pointer', width: 6, height: 6, borderRadius: 3, background: i === idx ? '#fff' : 'rgba(255,255,255,.3)' }}/>
+        ))}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 01 — HOME
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function HomeScreen() {
+  const projects = [
+    { name: 'Cobblestone Pullover', sub: 'Worsted · MoYa Studio',  date: 'Started Apr 14', writes: 47, time: '~28 hrs', hue: SKEIN.tangerine, label: 'WIP' },
+    { name: 'Hyacinth Socks',       sub: 'Fingering · Petite Knit', date: 'Started Mar 02', writes: 22, time: '~9 hrs',  hue: SKEIN.mint,      label: 'STR' },
+    { name: 'Linen Market Bag',     sub: 'DK · self-designed',      date: 'Started Jan 21', writes: 14, time: '~6 hrs',  hue: SKEIN.champagne, label: 'WIP', completed: true },
+    { name: 'Ombre Wrap',           sub: 'Lace · Andrea Mowry',     date: 'Started Sep 08', writes: 86, time: '~52 hrs', hue: SKEIN.pink,      label: 'WRP' },
+  ];
+
+  return (
+    <Phone>
+      <StatusBar/>
+
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px 6px' }}>
+        <button style={{
+          width: 38, height: 38, borderRadius: 19, border: 'none',
+          background: SKEIN.cream2, color: SKEIN.charcoal,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>{Icon.scan(18)}</button>
+        <SkeinWordmark size={20}/>
+        <button style={{
+          width: 38, height: 38, borderRadius: 19, border: 'none',
+          background: SKEIN.charcoal, color: SKEIN.cream,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>{Icon.plus(16, SKEIN.cream)}</button>
+      </div>
+
+      {/* Headline */}
+      <div style={{ padding: '20px 24px 16px' }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.2em', color: SKEIN.muted, marginBottom: 8 }}>
+          PROJECTS · 4 ACTIVE
+        </div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 36, lineHeight: 1, letterSpacing: '-0.025em', color: SKEIN.charcoal }}>
+          Tap. Track.<br/>Stitch.
+        </div>
+      </div>
+
+      {/* Streak strip */}
+      <div style={{ padding: '0 22px 16px' }}>
+        <div style={{
+          background: SKEIN.charcoal, color: SKEIN.cream, borderRadius: 18,
+          padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.18em', color: SKEIN.cream2, opacity: 0.7 }}>THIS WEEK</div>
+            <div style={{ fontWeight: 600, fontSize: 15, marginTop: 3, letterSpacing: '-0.01em' }}>4 days · 6h 12m on the needles</div>
+          </div>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 28 }}>
+            {[12, 22, 18, 28, 8, 24, 14].map((h, i) => (
+              <div key={i} style={{
+                width: 5, height: h, borderRadius: 2,
+                background: i === 6 ? SKEIN.tangerine : SKEIN.cream2,
+                opacity: i === 6 ? 1 : 0.55,
+              }}/>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Project cards */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {projects.map((p, i) => (
+          <div key={i} style={{
+            background: SKEIN.cream, border: `1px solid ${SKEIN.hairline}`,
+            borderRadius: 18, padding: 14, display: 'flex', gap: 14, alignItems: 'center',
+          }}>
+            <YarnPlaceholder size={56} hue={p.hue} label={p.label}/>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.015em', color: SKEIN.charcoal }}>{p.name}</div>
+                {p.completed && (
+                  <div style={{
+                    width: 16, height: 16, borderRadius: 8, background: SKEIN.tangerine,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{Icon.check(10, SKEIN.cream)}</div>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: SKEIN.muted, marginTop: 2 }}>{p.sub}</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 6, fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.06em', color: SKEIN.ink }}>
+                <span>{p.writes} TAPS</span>
+                <span style={{ opacity: 0.4 }}>·</span>
+                <span>{p.time.toUpperCase()}</span>
+              </div>
+            </div>
+            {Icon.chevron(12, SKEIN.muted)}
+          </div>
+        ))}
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 02 — SCAN RESULT MODAL
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function ScanResultScreen() {
+  return (
+    <Phone bg={SKEIN.charcoal}>
+      <StatusBar dark/>
+
+      {/* Faded list under modal */}
+      <div style={{ flex: 1, opacity: 0.18, padding: '14px 22px', pointerEvents: 'none' }}>
+        <div style={{ height: 36, background: SKEIN.cream, borderRadius: 18, marginBottom: 12 }}/>
+        <div style={{ height: 80, background: SKEIN.cream, borderRadius: 18, marginBottom: 10 }}/>
+        <div style={{ height: 80, background: SKEIN.cream, borderRadius: 18, marginBottom: 10 }}/>
+        <div style={{ height: 80, background: SKEIN.cream, borderRadius: 18, marginBottom: 10 }}/>
+      </div>
+
+      {/* Sheet */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        background: SKEIN.cream, borderRadius: '28px 28px 0 0',
+        padding: '14px 24px 36px',
+      }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: SKEIN.hairline, margin: '0 auto 14px' }}/>
+
+        {/* Success badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 14, background: SKEIN.tangerine,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>{Icon.check(14, SKEIN.cream)}</div>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted }}>
+            TAG READ · 0.4S
+          </div>
+        </div>
+
+        {/* Project header */}
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 16 }}>
+          <YarnPlaceholder size={68} hue={SKEIN.tangerine} label="WIP"/>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.18em', color: SKEIN.muted }}>
+              TAG 04 · COBBLESTONE PULLOVER
+            </div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 22, letterSpacing: '-0.025em', marginTop: 4, color: SKEIN.charcoal, lineHeight: 1.1 }}>
+              Picked up<br/>where you left off.
+            </div>
+          </div>
+        </div>
+
+        {/* Note quote */}
+        <div style={{
+          background: SKEIN.cream2, borderRadius: 14, padding: '14px 16px',
+          borderLeft: `3px solid ${SKEIN.tangerine}`, marginBottom: 14,
+        }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.16em', color: SKEIN.muted, marginBottom: 6 }}>
+            LAST NOTE · 2 DAYS AGO
+          </div>
+          <div style={{ fontSize: 14, color: SKEIN.ink, lineHeight: 1.45 }}>
+            "Sleeve cap, decreased every other row. Stopping at row 18, 32 sts on needle."
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+          {[
+            { k: 'SESSION', v: '2h 12m' },
+            { k: 'TOTAL',   v: '28h 14m' },
+            { k: 'TAPS',    v: '47' },
+          ].map((s, i) => (
+            <div key={i} style={{ flex: 1, padding: '10px 12px', background: SKEIN.cream2, borderRadius: 12 }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: SKEIN.muted }}>{s.k}</div>
+              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 17, letterSpacing: '-0.02em', marginTop: 2 }}>{s.v}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <button style={{
+          width: '100%', height: 52, borderRadius: 26, border: 'none',
+          background: SKEIN.tangerine, color: SKEIN.cream,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em',
+          boxShadow: '0 8px 24px -6px rgba(255, 107, 53, 0.45)', cursor: 'pointer',
+        }}>
+          {Icon.wave(17, SKEIN.cream)} Write a new note
+        </button>
+        <button style={{
+          width: '100%', height: 48, borderRadius: 24, border: 'none',
+          background: 'transparent', color: SKEIN.muted, marginTop: 6,
+          fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: 14, letterSpacing: '-0.005em', cursor: 'pointer',
+        }}>
+          Open Project
+        </button>
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 03 — PROJECT DETAIL / TAGS
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function ProjectDetailScreen() {
+  const tags = [
+    { label: 'Tag 1', notes: 'Cast on 96 sts, 4mm. Ribbing 2×2.',                      last: 'Apr 14 · 7:42 PM', writes: 1,  color: SKEIN.tangerine },
+    { label: 'Tag 2', notes: 'Body to underarm. Decreased 4 at side seams, row 84.',    last: 'Apr 22 · 9:18 PM', writes: 9,  color: SKEIN.mint },
+    { label: 'Tag 3', notes: 'Right sleeve, started decreases.',                         last: 'Apr 28 · 8:55 PM', writes: 14, color: SKEIN.champagne },
+    { label: 'Tag 4', notes: '(no notes)',                                               last: 'May 02 · 11:04 PM', writes: 23, color: SKEIN.pink, fresh: true },
+  ];
+
+  return (
+    <Phone>
+      <StatusBar/>
+
+      {/* Nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 4px' }}>
+        <button style={{
+          width: 38, height: 38, borderRadius: 19, border: 'none', background: SKEIN.cream2,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>{Icon.back(18, SKEIN.charcoal)}</button>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted }}>PROJECT</div>
+        <button style={{
+          width: 38, height: 38, borderRadius: 19, border: 'none', background: SKEIN.cream2,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>{Icon.more(18, SKEIN.charcoal)}</button>
+      </div>
+
+      {/* Hero */}
+      <div style={{ padding: '14px 24px 18px', display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+        <YarnPlaceholder size={84} hue={SKEIN.tangerine} label="WIP"/>
+        <div style={{ flex: 1, paddingBottom: 4 }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.18em', color: SKEIN.muted }}>WORSTED · 4MM</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 26, letterSpacing: '-0.025em', lineHeight: 1.05, marginTop: 4, color: SKEIN.charcoal }}>
+            Cobblestone<br/>Pullover
+          </div>
+        </div>
+      </div>
+
+      {/* Stat row */}
+      <div style={{ padding: '0 24px 18px', display: 'flex', gap: 8 }}>
+        {[
+          { k: 'TAPS', v: '47' }, { k: 'TIME', v: '28h' },
+          { k: 'TAGS', v: '4'  }, { k: 'DAYS', v: '19' },
+        ].map((s, i) => (
+          <div key={i} style={{ flex: 1, background: SKEIN.cream2, borderRadius: 14, padding: '10px 12px' }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.16em', color: SKEIN.muted }}>{s.k}</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 20, letterSpacing: '-0.02em', marginTop: 2, color: SKEIN.charcoal }}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ padding: '0 24px 14px', display: 'flex', gap: 6 }}>
+        <div style={{
+          background: SKEIN.charcoal, color: SKEIN.cream, padding: '8px 16px', borderRadius: 14,
+          fontWeight: 600, fontSize: 13, letterSpacing: '-0.01em',
+        }}>Tags · 4</div>
+        <div style={{ color: SKEIN.muted, padding: '8px 16px', borderRadius: 14, fontWeight: 500, fontSize: 13, letterSpacing: '-0.01em' }}>
+          History
+        </div>
+        <div style={{ flex: 1 }}/>
+        <div style={{
+          background: SKEIN.cream2, color: SKEIN.charcoal, padding: '8px 14px', borderRadius: 14,
+          fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          {Icon.link(11, SKEIN.charcoal)} PATTERN
+        </div>
+      </div>
+
+      {/* Tag list */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 100px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {tags.map((t, i) => (
+          <div key={i} style={{
+            background: SKEIN.cream, border: `1px solid ${SKEIN.hairline}`,
+            borderRadius: 16, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 10, background: SKEIN.cream2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: `1.5px solid ${t.color}`, flexShrink: 0,
+            }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.04em', color: t.color }}>
+                {String(i + 1).padStart(2, '0')}
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: SKEIN.charcoal }}>{t.label}</div>
+                {t.fresh && (
+                  <div style={{
+                    fontFamily: FONT_MONO, fontSize: 8.5, letterSpacing: '0.16em',
+                    background: SKEIN.tangerine, color: SKEIN.cream,
+                    padding: '2px 6px', borderRadius: 4, fontWeight: 700,
+                  }}>NEW</div>
+                )}
+                <div style={{ flex: 1 }}/>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, color: SKEIN.muted, letterSpacing: '0.06em' }}>
+                  {t.writes} ✕
+                </div>
+              </div>
+              <div style={{
+                fontSize: 13, color: t.notes.startsWith('(') ? SKEIN.muted : SKEIN.ink,
+                marginTop: 4, lineHeight: 1.4,
+                fontStyle: t.notes.startsWith('(') ? 'italic' : 'normal',
+              }}>{t.notes}</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, color: SKEIN.muted, marginTop: 6, letterSpacing: '0.06em' }}>
+                {t.last.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Floating add tag */}
+      <div style={{ position: 'absolute', bottom: 28, left: 22, right: 22 }}>
+        <button style={{
+          width: '100%', height: 54, borderRadius: 27, border: 'none',
+          background: SKEIN.tangerine, color: SKEIN.cream,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em',
+          cursor: 'pointer',
+          boxShadow: '0 8px 24px -6px rgba(255, 107, 53, 0.45)',
+        }}>
+          {Icon.wave(18, SKEIN.cream)} Add Tag
+        </button>
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 04 — HISTORY
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function HistoryScreen() {
+  const days = [3, 0, 8, 6, 0, 4, 12, 9, 5, 0, 7, 14, 8, 2, 0, 6, 11, 9, 4];
+  const max = Math.max(...days);
+
+  const events = [
+    { date: 'TODAY · 11:04 PM',      tag: 'Tag 4', tagColor: SKEIN.pink,      gap: '+2h 12m', note: '(no notes)' },
+    { date: 'TODAY · 8:52 PM',       tag: 'Tag 4', tagColor: SKEIN.pink,      gap: '+18m',    note: 'Sleeve cap, decreased every other row.' },
+    { date: 'TODAY · 8:34 PM',       tag: 'Tag 4', tagColor: SKEIN.pink,      gap: null,      note: 'First write — second sleeve.' },
+    { date: 'YESTERDAY · 9:55 PM',   tag: 'Tag 3', tagColor: SKEIN.champagne, gap: '+1h 04m', note: 'Right sleeve done. Ends woven.' },
+    { date: 'APR 28 · 8:51 PM',      tag: 'Tag 3', tagColor: SKEIN.champagne, gap: '+44m',    note: 'Right sleeve, started decreases.' },
+    { date: 'APR 27 · 10:11 PM',     tag: 'Tag 2', tagColor: SKEIN.mint,      gap: '+1h 22m', note: 'Picked up sleeve sts, 56 around.' },
+  ];
+
+  return (
+    <Phone>
+      <StatusBar/>
+
+      {/* Nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 4px' }}>
+        <button style={{
+          width: 38, height: 38, borderRadius: 19, border: 'none', background: SKEIN.cream2,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>{Icon.back(18, SKEIN.charcoal)}</button>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted }}>HISTORY</div>
+        <div style={{ width: 38 }}/>
+      </div>
+
+      <div style={{ padding: '12px 24px 6px' }}>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 26, letterSpacing: '-0.025em', color: SKEIN.charcoal, lineHeight: 1.05 }}>
+          Cobblestone<br/>Pullover
+        </div>
+      </div>
+
+      {/* Hero stat panel */}
+      <div style={{ margin: '14px 22px 18px', background: SKEIN.charcoal, color: SKEIN.cream, borderRadius: 22, padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 44, letterSpacing: '-0.04em', lineHeight: 1 }}>28</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 22, letterSpacing: '-0.02em', color: SKEIN.tangerine }}>h</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 30, letterSpacing: '-0.03em', lineHeight: 1, marginLeft: 4 }}>14</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 18, letterSpacing: '-0.02em', color: SKEIN.tangerine }}>m</div>
+          <div style={{ flex: 1 }}/>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.18em', opacity: 0.55 }}>EST. WORK</div>
+        </div>
+
+        {/* Daily bars */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 46, marginTop: 18 }}>
+          {days.map((d, i) => (
+            <div key={i} style={{
+              flex: 1,
+              height: d ? `${(d / max) * 100}%` : 2,
+              background: d ? (i === days.length - 1 ? SKEIN.tangerine : SKEIN.cream) : 'rgba(250,246,240,0.18)',
+              borderRadius: 1.5, opacity: d ? (0.45 + 0.55 * (d / max)) : 1,
+            }}/>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.14em', opacity: 0.55 }}>
+          <span>APR 14</span><span>·</span><span>TODAY</span>
+        </div>
+      </div>
+
+      <SectionHead>RECENT EVENTS · 47 TOTAL</SectionHead>
+
+      {/* Timeline */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 5, top: 6, bottom: 6, width: 1, background: SKEIN.hairline }}/>
+          {events.map((e, i) => (
+            <div key={i} style={{ position: 'relative', paddingLeft: 22, paddingBottom: 14 }}>
+              <div style={{
+                position: 'absolute', left: 0, top: 6, width: 11, height: 11,
+                borderRadius: 6, background: SKEIN.cream, border: `2px solid ${e.tagColor}`,
+              }}/>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.14em', color: SKEIN.muted, fontWeight: 600 }}>
+                  {e.date}
+                </div>
+                <div style={{
+                  fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.1em', fontWeight: 700,
+                  color: e.tagColor, padding: '2px 6px', borderRadius: 4, background: SKEIN.cream2,
+                }}>{e.tag.toUpperCase()}</div>
+              </div>
+              <div style={{
+                fontSize: 13.5, color: e.note.startsWith('(') ? SKEIN.muted : SKEIN.ink,
+                marginTop: 5, lineHeight: 1.4, fontStyle: e.note.startsWith('(') ? 'italic' : 'normal',
+              }}>{e.note}</div>
+              {e.gap && (
+                <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, color: SKEIN.muted, marginTop: 4, letterSpacing: '0.06em' }}>
+                  {e.gap.toUpperCase()} SINCE LAST
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 05 — WRITE TAG
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function WriteTagScreen() {
+  return (
+    <Phone>
+      <StatusBar/>
+
+      {/* Nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 4px' }}>
+        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 500, color: SKEIN.muted, padding: '6px 8px' }}>
+          Cancel
+        </div>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted }}>EDIT TAG</div>
+        <div style={{ width: 50 }}/>
+      </div>
+
+      <div style={{ padding: '14px 24px 8px' }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.18em', color: SKEIN.muted }}>
+          COBBLESTONE PULLOVER · TAG 04
+        </div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 28, letterSpacing: '-0.025em', marginTop: 6, color: SKEIN.charcoal }}>
+          What did you<br/>just finish?
+        </div>
+      </div>
+
+      {/* Note card */}
+      <div style={{ padding: '18px 22px 0' }}>
+        <div style={{
+          background: SKEIN.cream, border: `1px solid ${SKEIN.hairline}`,
+          borderRadius: 18, padding: 18, minHeight: 150,
+        }}>
+          <div style={{ fontSize: 15, color: SKEIN.charcoal, lineHeight: 1.5, letterSpacing: '-0.005em' }}>
+            Sleeve cap, decreased every other row. Stopping at row 18, 32 sts on needle.
+            <span style={{
+              display: 'inline-block', width: 1.5, height: 16, background: SKEIN.tangerine,
+              verticalAlign: 'text-bottom', marginLeft: 1,
+              animation: 'skein-caret 1s steps(2) infinite',
+            }}/>
+          </div>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginTop: 14, paddingTop: 12, borderTop: `1px solid ${SKEIN.hairline}`,
+          }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['+ row count', '+ stitch ct', '+ photo'].map(c => (
+                <div key={c} style={{
+                  fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '0.1em', color: SKEIN.muted,
+                  padding: '4px 8px', background: SKEIN.cream2, borderRadius: 6,
+                }}>{c.toUpperCase()}</div>
+              ))}
+            </div>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: SKEIN.muted, letterSpacing: '0.1em' }}>97 / 200</div>
+          </div>
+        </div>
+      </div>
+
+      {/* NFC wave prompt */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 156, height: 156, borderRadius: '50%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {[0, 1, 2].map(r => (
+            <div key={r} style={{
+              position: 'absolute', inset: -r * 14 - 4, borderRadius: '50%',
+              border: `1px solid ${SKEIN.tangerine}`, opacity: 0.6 - r * 0.18,
+            }}/>
+          ))}
+          <div style={{
+            width: 88, height: 88, borderRadius: '50%', background: SKEIN.tangerine,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 12px 32px -8px rgba(255, 107, 53, 0.5)',
+          }}>
+            {Icon.wave(34, SKEIN.cream)}
+          </div>
+        </div>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted, marginTop: 22 }}>
+          READY · NTAG216
+        </div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 17, marginTop: 6, color: SKEIN.charcoal, letterSpacing: '-0.015em' }}>
+          Hold your iPhone near the clip
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ padding: '12px 22px 28px' }}>
+        <button style={{
+          width: '100%', height: 54, borderRadius: 27, border: 'none',
+          background: SKEIN.charcoal, color: SKEIN.cream,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em', cursor: 'pointer',
+        }}>
+          {Icon.wave(18, SKEIN.cream)} Write to Tag
+        </button>
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 06 — NEW PROJECT
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+function NewProjectScreen() {
+  const swatches = [SKEIN.tangerine, SKEIN.mint, SKEIN.champagne, SKEIN.pink, '#7DAEC9', '#B8A99A'];
+
+  return (
+    <Phone>
+      <StatusBar/>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 4px' }}>
+        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 500, color: SKEIN.muted, padding: '6px 8px' }}>
+          Cancel
+        </div>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.2em', color: SKEIN.muted }}>NEW PROJECT</div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: SKEIN.tangerine, padding: '6px 8px' }}>
+          Create
+        </div>
+      </div>
+
+      {/* Headline */}
+      <div style={{ padding: '12px 24px 18px' }}>
+        <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 28, letterSpacing: '-0.025em', color: SKEIN.charcoal, lineHeight: 1.05 }}>
+          What are you<br/>making?
+        </div>
+      </div>
+
+      {/* Photo + name */}
+      <div style={{ padding: '0 22px 18px', display: 'flex', gap: 14 }}>
+        <div style={{
+          width: 92, height: 92, borderRadius: 18, background: SKEIN.cream2,
+          border: `1.5px dashed ${SKEIN.hairline}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4,
+          flexShrink: 0,
+        }}>
+          {Icon.photo(20, SKEIN.muted)}
+          <div style={{ fontFamily: FONT_MONO, fontSize: 8.5, letterSpacing: '0.16em', color: SKEIN.muted }}>PHOTO</div>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ background: SKEIN.cream, border: `1px solid ${SKEIN.hairline}`, borderRadius: 14, padding: '10px 14px' }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.16em', color: SKEIN.muted }}>NAME</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: SKEIN.charcoal, marginTop: 3, letterSpacing: '-0.015em' }}>
+              Cobblestone Pullover
+              <span style={{
+                display: 'inline-block', width: 1.5, height: 14, background: SKEIN.tangerine,
+                verticalAlign: 'text-bottom', marginLeft: 1,
+                animation: 'skein-caret 1s steps(2) infinite',
+              }}/>
+            </div>
+          </div>
+          <div style={{ background: SKEIN.cream, border: `1px solid ${SKEIN.hairline}`, borderRadius: 14, padding: '10px 14px', marginTop: 8 }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.16em', color: SKEIN.muted }}>PATTERN URL</div>
+            <div style={{ fontSize: 13, color: SKEIN.muted, marginTop: 3 }}>ravelry.com/…</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Color tag */}
+      <SectionHead>COLOR TAG</SectionHead>
+      <div style={{ padding: '0 24px 18px', display: 'flex', gap: 10 }}>
+        {swatches.map((c, i) => (
+          <div key={i} style={{
+            width: 36, height: 36, borderRadius: 18, background: c,
+            border: i === 0 ? `2.5px solid ${SKEIN.charcoal}` : `1px solid ${SKEIN.hairline}`,
+            boxShadow: i === 0 ? `0 0 0 2px ${SKEIN.cream}` : 'none',
+            position: 'relative',
+          }}>
+            {i === 0 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {Icon.check(14, SKEIN.cream)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Details */}
+      <SectionHead>DETAILS</SectionHead>
+      <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {[
+          { k: 'Weight',       v: 'Worsted'        },
+          { k: 'Needles',      v: '4 mm · US 6'    },
+          { k: 'Yardage goal', v: '1,200 yd'       },
+          { k: 'Started',      v: 'Today, Apr 14'  },
+        ].map((r, i, arr) => (
+          <div key={i} style={{
+            background: SKEIN.cream, padding: '14px 16px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            border: `1px solid ${SKEIN.hairline}`,
+            borderTopLeftRadius:     i === 0 ? 14 : 0,
+            borderTopRightRadius:    i === 0 ? 14 : 0,
+            borderBottomLeftRadius:  i === arr.length - 1 ? 14 : 0,
+            borderBottomRightRadius: i === arr.length - 1 ? 14 : 0,
+            borderTop: i === 0 ? `1px solid ${SKEIN.hairline}` : 'none',
+          }}>
+            <div style={{ fontSize: 14, color: SKEIN.charcoal, fontWeight: 500 }}>{r.k}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 14, color: SKEIN.muted }}>{r.v}</div>
+              {Icon.chevron(12, SKEIN.muted)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tip */}
+      <div style={{ margin: '18px 22px 0', padding: '12px 14px', background: SKEIN.cream2, borderRadius: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: 11, background: SKEIN.tangerine,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
+        }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 11, fontWeight: 700, color: SKEIN.cream }}>i</div>
+        </div>
+        <div style={{ fontSize: 12, color: SKEIN.ink, lineHeight: 1.45, letterSpacing: '-0.005em' }}>
+          You can clip a Skein NFC tag to your project bag now or later — tags appear here once they're written.
+        </div>
+      </div>
+    </Phone>
+  );
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     APP ENTRY POINT
+═══════════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+// Caret blink animation
+const caretStyle = document.createElement('style');
+caretStyle.textContent = '@keyframes skein-caret { 50% { opacity: 0; } }';
+document.head.appendChild(caretStyle);
+
+function App() {
+  return (
+    <DesignCanvas
+      title="Skein — iOS App Redesign"
+      subtitle="Cream surface · Charcoal type · Tangerine accent · Helvetica Neue"
+      bg="#EFEAE0"
+    >
+      <DCSection id="core" title="Core flow" subtitle="Cream surface · Charcoal type · Tangerine accent">
+        <DCArtboard id="home"    label="01 Home — projects"     width={406} height={860}>
+          <div style={{ padding: 8 }}><HomeScreen/></div>
+        </DCArtboard>
+        <DCArtboard id="scan"    label="02 Scan result (modal)" width={406} height={860}>
+          <div style={{ padding: 8 }}><ScanResultScreen/></div>
+        </DCArtboard>
+        <DCArtboard id="detail"  label="03 Project / Tags"      width={406} height={860}>
+          <div style={{ padding: 8 }}><ProjectDetailScreen/></div>
+        </DCArtboard>
+        <DCArtboard id="history" label="04 Project / History"   width={406} height={860}>
+          <div style={{ padding: 8 }}><HistoryScreen/></div>
+        </DCArtboard>
+        <DCArtboard id="write"   label="05 Edit / write tag"    width={406} height={860}>
+          <div style={{ padding: 8 }}><WriteTagScreen/></div>
+        </DCArtboard>
+        <DCArtboard id="new"     label="06 New project"         width={406} height={860}>
+          <div style={{ padding: 8 }}><NewProjectScreen/></div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

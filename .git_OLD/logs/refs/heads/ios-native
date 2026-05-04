@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7303a9f3c7d6742ff7b9f5c1a50baec912dee46a kmtompkins3 <kmtompkins3@gmail.com> 1777320667 -0400	branch: Created from HEAD
+7303a9f3c7d6742ff7b9f5c1a50baec912dee46a 998567a8040e2c9bab3f55d614d496cd87b7bd37 kmtompkins3 <kmtompkins3@gmail.com> 1777320726 -0400	commit: Add iOS native task list and update CLAUDE.md for iOS development
+998567a8040e2c9bab3f55d614d496cd87b7bd37 63d4784ba13333f4468935fb19ba54df0ea69f9e kmtompkins3 <kmtompkins3@gmail.com> 1777321147 -0400	commit: Add iOS native Swift source files (Phases 1–9)

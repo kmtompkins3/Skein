@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --version)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(where gh *)",
+      "Bash(winget list *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/Desktop/AppData/Local/Programs/**)",
+      "Read(//c/Users/Desktop/**)",
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

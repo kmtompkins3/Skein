@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stitch Clip Note Writer</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color-bg: #faf9f7;
+      --color-surface: #ffffff;
+      --color-border: #e0ddd8;
+      --color-primary: #6b4f3a;
+      --color-primary-hover: #5a4030;
+      --color-primary-disabled: #b8a99a;
+      --color-text: #2d2520;
+      --color-text-muted: #7a6f68;
+      --color-success: #2d7a3a;
+      --color-error: #b32d2d;
+      --color-warning: #b36b00;
+      --color-tab-active: #6b4f3a;
+      --color-banner-bg: #fff3cd;
+      --color-banner-border: #e6c96a;
+      --color-banner-text: #7a5a00;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: 0 0 32px;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 20px 20px 0;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Unsupported Banner ── */
+    .banner {
+      display: none;
+      margin: 16px 20px 0;
+      padding: 14px 16px;
+      background: var(--color-banner-bg);
+      border: 1px solid var(--color-banner-border);
+      border-radius: var(--radius-sm);
+      color: var(--color-banner-text);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .banner.visible {
+      display: block;
+    }
+
+    .banner-icon {
+      font-style: normal;
+      margin-right: 4px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      margin: 20px 20px 0;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 0;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      min-height: 48px;
+    }
+
+    .tab-btn[aria-selected="true"] {
+      color: var(--color-tab-active);
+      border-bottom-color: var(--color-tab-active);
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    /* ── Tab Panels ── */
+    .tab-panel {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px 20px 0;
+      flex: 1;
+    }
+
+    .tab-panel.active {
+      display: flex;
+    }
+
+    /* ── Textarea ── */
+    .label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .textarea-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-text);
+      resize: vertical;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    .char-counter {
+      align-self: flex-end;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .char-counter.at-limit {
+      color: var(--color-warning);
+      font-weight: 600;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      min-height: 52px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--color-primary);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
+
+    .btn-primary:disabled {
+      background: var(--color-primary-disabled);
+      cursor: not-allowed;
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-primary);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f5ede8;
+    }
+
+    .btn-secondary:disabled {
+      color: var(--color-primary-disabled);
+      border-color: var(--color-primary-disabled);
+      cursor: not-allowed;
+    }
+
+    .btn-secondary:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+    }
+
+    /* ── Status ── */
+    .status {
+      font-size: 0.9rem;
+      min-height: 22px;
+      color: var(--color-text-muted);
+    }
+
+    .status.success {
+      color: var(--color-success);
+      font-weight: 600;
+    }
+
+    .status.error {
+      color: var(--color-error);
+      font-weight: 600;
+    }
+
+    /* ── Note Display (Read tab) ── */
+    .note-display {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .note-display.visible {
+      display: flex;
+    }
+
+    .note-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+    }
+
+    .note-body {
+      padding: 14px;
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--color-text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--color-border);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <h1>Stitch Clip Note Writer</h1>
+  </header>
+
+  <div class="banner" id="unsupportedBanner" role="alert">
+    <em class="banner-icon">⚠</em>
+    NFC is not supported in this browser. Please use Chrome on Android.
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button
+      class="tab-btn"
+      id="tab-write"
+      role="tab"
+      aria-selected="true"
+      aria-controls="panel-write"
+    >Write</button>
+    <button
+      class="tab-btn"
+      id="tab-read"
+      role="tab"
+      aria-selected="false"
+      aria-controls="panel-read"
+    >Read</button>
+  </nav>
+
+  <!-- Write Panel -->
+  <section class="tab-panel active" id="panel-write" role="tabpanel" aria-labelledby="tab-write">
+
+    <div class="textarea-wrap">
+      <label class="label" for="noteInput" id="noteLabel">Enter your note:</label>
+      <textarea
+        id="noteInput"
+        maxlength="500"
+        placeholder="Enter your stitch note (e.g., Row 12, started double crochet)"
+        aria-describedby="charCounter"
+      ></textarea>
+      <span class="char-counter" id="charCounter" aria-live="polite">0 / 500</span>
+    </div>
+
+    <button class="btn-primary" id="writeBtn" disabled>Write to Tag</button>
+
+    <p class="status" id="writeStatus" aria-live="polite">Ready to write</p>
+
+  </section>
+
+  <!-- Read Panel -->
+  <section class="tab-panel" id="panel-read" role="tabpanel" aria-labelledby="tab-read">
+
+    <button class="btn-primary" id="scanBtn">Scan Tag</button>
+
+    <p class="status" id="readStatus" aria-live="polite"></p>
+
+    <hr class="divider" />
+
+    <div class="note-display" id="noteDisplay">
+      <span class="note-label">Current Note</span>
+      <div class="note-body" id="noteBody"></div>
+      <button class="btn-secondary" id="editNoteBtn">Edit Note</button>
+    </div>
+
+  </section>
+
+</div>
+
+<script>
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+
+  const STORAGE_KEY = 'stitchClip_lastNote';
+  let abortController = null;
+  let nfcSupported = ('NDEFReader' in window);
+
+  // ── DOM references ─────────────────────────────────────────────────────────
+
+  const banner      = document.getElementById('unsupportedBanner');
+  const tabWrite    = document.getElementById('tab-write');
+  const tabRead     = document.getElementById('tab-read');
+  const panelWrite  = document.getElementById('panel-write');
+  const panelRead   = document.getElementById('panel-read');
+  const noteInput   = document.getElementById('noteInput');
+  const noteLabel   = document.getElementById('noteLabel');
+  const charCounter = document.getElementById('charCounter');
+  const writeBtn    = document.getElementById('writeBtn');
+  const writeStatus = document.getElementById('writeStatus');
+  const scanBtn     = document.getElementById('scanBtn');
+  const readStatus  = document.getElementById('readStatus');
+  const noteDisplay = document.getElementById('noteDisplay');
+  const noteBody    = document.getElementById('noteBody');
+  const editNoteBtn = document.getElementById('editNoteBtn');
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+
+  function init() {
+    if (!nfcSupported) {
+      banner.classList.add('visible');
+      writeBtn.disabled = true;
+      scanBtn.disabled  = true;
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      noteInput.value = saved;
+      noteLabel.textContent = 'Enter your note (last note loaded):';
+      updateCharCounter();
+      updateWriteBtn();
+    }
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+
+  function switchTab(target) {
+    cancelNfc();
+
+    const isWrite = target === 'write';
+
+    tabWrite.setAttribute('aria-selected', isWrite ? 'true' : 'false');
+    tabRead.setAttribute('aria-selected',  isWrite ? 'false' : 'true');
+
+    panelWrite.classList.toggle('active', isWrite);
+    panelRead.classList.toggle('active', !isWrite);
+  }
+
+  tabWrite.addEventListener('click', () => switchTab('write'));
+  tabRead.addEventListener('click',  () => switchTab('read'));
+
+  // ── Character counter & write button state ─────────────────────────────────
+
+  function updateCharCounter() {
+    const len = noteInput.value.length;
+    charCounter.textContent = `${len} / 500`;
+    charCounter.classList.toggle('at-limit', len === 500);
+  }
+
+  function updateWriteBtn() {
+    if (!nfcSupported) return;
+    writeBtn.disabled = noteInput.value.trim().length === 0;
+  }
+
+  noteInput.addEventListener('input', () => {
+    updateCharCounter();
+    updateWriteBtn();
+  });
+
+  // ── Write ──────────────────────────────────────────────────────────────────
+
+  writeBtn.addEventListener('click', async () => {
+    if (!nfcSupported) return;
+
+    const note = noteInput.value;
+    if (!note.trim()) return;
+
+    cancelNfc();
+    abortController = new AbortController();
+
+    setWriteStatus('', 'Tap tag now...');
+    writeBtn.disabled = true;
+
+    try {
+      const ndef = new NDEFReader();
+      await ndef.write(
+        { records: [{ recordType: 'text', data: note }] },
+        { signal: abortController.signal }
+      );
+
+      localStorage.setItem(STORAGE_KEY, note);
+      noteLabel.textContent = 'Enter your note (last note loaded):';
+      setWriteStatus('success', '✓ Note written successfully');
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setWriteStatus('', 'Ready to write');
+      } else if (err.name === 'NotAllowedError') {
+        setWriteStatus('error', '✗ Write timed out. Hold tag steady and try again.');
+      } else if (err.message && err.message.toLowerCase().includes('read-only')) {
+        setWriteStatus('error', '✗ Tag is read-only and cannot be written to.');
+      } else {
+        setWriteStatus('error', '✗ Write failed. Please try again.');
+      }
+    } finally {
+      abortController = null;
+      updateWriteBtn();
+    }
+  });
+
+  function setWriteStatus(type, message) {
+    writeStatus.textContent  = message;
+    writeStatus.className    = 'status' + (type ? ' ' + type : '');
+  }
+
+  // ── Read ───────────────────────────────────────────────────────────────────
+
+  scanBtn.addEventListener('click', async () => {
+    if (!nfcSupported) return;
+
+    cancelNfc();
+    abortController = new AbortController();
+
+    setReadStatus('', 'Tap tag to read...');
+    scanBtn.disabled = true;
+    noteDisplay.classList.remove('visible');
+
+    try {
+      const ndef = new NDEFReader();
+      await ndef.scan({ signal: abortController.signal });
+
+      ndef.addEventListener('reading', ({ message }) => {
+        const textRecord = message.records.find(r => r.recordType === 'text');
+
+        if (!textRecord) {
+          setReadStatus('error', '✗ No note found on this tag. Write a note first.');
+          scanBtn.disabled = false;
+          return;
+        }
+
+        const decoder = new TextDecoder(textRecord.encoding || 'utf-8');
+        const noteText = decoder.decode(textRecord.data);
+
+        noteBody.textContent = noteText;
+        noteDisplay.classList.add('visible');
+        setReadStatus('success', '✓ Note retrieved');
+        scanBtn.disabled = false;
+        abortController = null;
+      });
+
+      ndef.addEventListener('readingerror', () => {
+        setReadStatus('error', '✗ Could not read tag. Tag may be damaged.');
+        scanBtn.disabled = false;
+        abortController = null;
+      });
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setReadStatus('', '');
+      } else if (err.name === 'NotAllowedError') {
+        setReadStatus('error', '✗ Read failed. Tag may be out of range.');
+      } else {
+        setReadStatus('error', '✗ Read failed. Tag may be out of range.');
+      }
+      scanBtn.disabled = false;
+      abortController = null;
+    }
+  });
+
+  function setReadStatus(type, message) {
+    readStatus.textContent = message;
+    readStatus.className   = 'status' + (type ? ' ' + type : '');
+  }
+
+  // ── Edit Note (Read → Write) ───────────────────────────────────────────────
+
+  editNoteBtn.addEventListener('click', () => {
+    const text = noteBody.textContent;
+    noteInput.value = text;
+    noteLabel.textContent = 'Enter your note (last note loaded):';
+    updateCharCounter();
+    updateWriteBtn();
+    switchTab('write');
+  });
+
+  // ── Abort helper ───────────────────────────────────────────────────────────
+
+  function cancelNfc() {
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+    writeBtn.disabled = !nfcSupported || noteInput.value.trim().length === 0;
+    scanBtn.disabled  = !nfcSupported;
+    setWriteStatus('', 'Ready to write');
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+
+  init();
+</script>
+</body>
+</html>

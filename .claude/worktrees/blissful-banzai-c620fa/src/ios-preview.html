@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NFC Stitch Clip — iOS Preview</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* iOS Design Tokens */
+  :root {
+    --bg:          #000000;
+    --bg2:         #1C1C1E;
+    --bg3:         #2C2C2E;
+    --bg4:         #3A3A3C;
+    --text1:       #FFFFFF;
+    --text2:       #8E8E93;
+    --text3:       #636366;
+    --sep:         rgba(84,84,88,0.6);
+    --accent:      #007AFF;
+    --green:       #34C759;
+    --red:         #FF3B30;
+    --yellow:      #FFD60A;
+    --fill:        rgba(120,120,128,0.18);
+    --fill2:       rgba(120,120,128,0.32);
+    --nav-h:       44px;
+    --status-h:    48px;
+    --radius:      10px;
+    --radius-lg:   13px;
+    --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: var(--font);
+    color: var(--text1);
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 393px;
+    height: 852px;
+    background: var(--bg);
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 10px #1a1a1a, 0 0 0 11px #333, 0 30px 80px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: var(--status-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 0;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons svg { width: 16px; height: 12px; fill: var(--text1); }
+
+  /* Navigation bar */
+  .nav-bar {
+    height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .nav-bar .nav-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 17px; font-weight: 600; letter-spacing: -0.4px;
+    white-space: nowrap;
+  }
+  .nav-bar .nav-left, .nav-bar .nav-right {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .nav-bar .nav-right { margin-left: auto; }
+  .nav-btn {
+    background: none; border: none; color: var(--accent);
+    font-size: 17px; cursor: pointer; padding: 8px 8px;
+    display: flex; align-items: center; gap: 4px;
+    font-family: var(--font); font-weight: 400;
+    border-radius: 8px; transition: opacity .15s;
+  }
+  .nav-btn:active { opacity: 0.5; }
+  .nav-btn svg { width: 18px; height: 18px; fill: none; stroke: var(--accent); stroke-width: 2; }
+  .nav-btn.icon-only { padding: 8px 6px; }
+
+  /* Screen container */
+  .screens { flex: 1; overflow: hidden; position: relative; }
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform .32s cubic-bezier(.4,0,.2,1);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .screen.active { transform: translateX(0); }
+  .screen.behind  { transform: translateX(-28%); }
+
+  /* Large title */
+  .large-title {
+    font-size: 34px; font-weight: 700; letter-spacing: -0.8px;
+    padding: 2px 16px 8px;
+    flex-shrink: 0;
+  }
+
+  /* Scroll area */
+  .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* Section list */
+  .list-section { margin: 0 0 32px; }
+  .list-section-header {
+    font-size: 13px; font-weight: 400; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 6px 20px 6px;
+  }
+  .list-group {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    margin: 0 16px;
+    overflow: hidden;
+  }
+  .list-cell {
+    display: flex; align-items: center;
+    padding: 11px 16px;
+    cursor: pointer;
+    border-bottom: 0.5px solid var(--sep);
+    transition: background .1s;
+    position: relative;
+    gap: 12px;
+    min-height: 44px;
+  }
+  .list-cell:last-child { border-bottom: none; }
+  .list-cell:active, .list-cell.pressed { background: var(--fill); }
+  .list-cell .cell-main { flex: 1; min-width: 0; }
+  .cell-title { font-size: 17px; color: var(--text1); }
+  .cell-subtitle { font-size: 13px; color: var(--text2); margin-top: 1px; }
+  .cell-caption { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .cell-chevron { color: var(--text3); font-size: 13px; flex-shrink: 0; margin-left: 4px; }
+  .cell-chevron svg { width: 8px; height: 14px; fill: none; stroke: var(--text3); stroke-width: 2.5; stroke-linecap: round; }
+
+  /* Thumbnail */
+  .thumb {
+    width: 52px; height: 52px; border-radius: 8px;
+    flex-shrink: 0; overflow: hidden;
+    background: var(--fill); display: flex; align-items: center; justify-content: center;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-placeholder { font-size: 20px; color: var(--text3); }
+
+  /* Status badge */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500;
+    padding: 2px 7px; border-radius: 20px;
+  }
+  .badge.green  { background: rgba(52,199,89,.18);  color: var(--green); }
+  .badge.blue   { background: rgba(0,122,255,.18);   color: var(--accent); }
+
+  /* Segmented control */
+  .segmented {
+    display: flex; background: var(--fill); border-radius: 9px;
+    padding: 2px; margin: 0 16px 8px;
+    flex-shrink: 0;
+  }
+  .seg-btn {
+    flex: 1; border: none; background: none; color: var(--text2);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    padding: 5px 0; border-radius: 7px; font-family: var(--font);
+    transition: all .2s;
+  }
+  .seg-btn.active { background: var(--bg3); color: var(--text1); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+
+  /* Primary button */
+  .btn-primary {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius-lg); cursor: pointer;
+    font-size: 17px; font-weight: 600; font-family: var(--font);
+    padding: 14px; width: 100%; transition: opacity .15s;
+  }
+  .btn-primary:active { opacity: 0.75; }
+  .btn-primary.disabled, .btn-primary:disabled { background: var(--fill2); color: var(--text2); cursor: default; }
+  .btn-secondary {
+    display: flex; align-items: center; justify-content: center;
+    background: none; color: var(--accent); border: none; cursor: pointer;
+    font-size: 17px; font-family: var(--font); padding: 12px; width: 100%;
+    transition: opacity .15s;
+  }
+  .btn-secondary:active { opacity: 0.5; }
+  .btn-danger { color: var(--red); }
+
+  /* Bottom safe area */
+  .safe-bottom { height: 34px; flex-shrink: 0; }
+
+  /* Sheet overlay */
+  .sheet-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 50; opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+  }
+  .sheet-overlay.visible { opacity: 1; pointer-events: all; }
+
+  /* Sheet */
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--bg2);
+    border-radius: 13px 13px 0 0;
+    z-index: 51;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+    max-height: 85%;
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 5px; border-radius: 3px; background: var(--fill2);
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+  }
+  .sheet-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px 0;
+    flex-shrink: 0;
+  }
+  .sheet-title { font-size: 17px; font-weight: 600; }
+  .sheet-body { flex: 1; overflow-y: auto; padding: 16px; }
+  .sheet-body::-webkit-scrollbar { display: none; }
+  .sheet-footer { padding: 12px 16px; flex-shrink: 0; }
+
+  /* Alert */
+  .alert-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 60; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .alert-overlay.visible { opacity: 1; pointer-events: all; }
+  .alert-box {
+    background: rgba(44,44,46,.98); border-radius: 14px;
+    width: 270px; overflow: hidden;
+    backdrop-filter: blur(20px);
+    transform: scale(1.1);
+    transition: transform .2s;
+  }
+  .alert-overlay.visible .alert-box { transform: scale(1); }
+  .alert-title { font-size: 17px; font-weight: 600; text-align: center; padding: 20px 16px 4px; }
+  .alert-msg   { font-size: 13px; color: var(--text2); text-align: center; padding: 4px 16px 16px; line-height: 1.4; }
+  .alert-actions { border-top: 0.5px solid var(--sep); display: flex; }
+  .alert-btn {
+    flex: 1; border: none; background: none; color: var(--accent);
+    font-size: 17px; padding: 14px 0; cursor: pointer;
+    font-family: var(--font); border-right: 0.5px solid var(--sep);
+    transition: background .1s;
+  }
+  .alert-btn:last-child { border-right: none; }
+  .alert-btn:active { background: var(--fill); }
+  .alert-btn.bold { font-weight: 600; }
+  .alert-btn.destructive { color: var(--red); }
+
+  /* Form elements */
+  .form-section { margin-bottom: 24px; }
+  .form-label { font-size: 13px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 4px 6px; }
+  .form-group { background: var(--bg3); border-radius: var(--radius-lg); overflow: hidden; }
+  .form-row {
+    display: flex; align-items: center;
+    border-bottom: 0.5px solid var(--sep);
+    padding: 12px 16px;
+  }
+  .form-row:last-child { border-bottom: none; }
+  .form-row label { font-size: 17px; color: var(--text1); min-width: 100px; }
+  .form-row input, .form-row textarea {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text1); font-size: 17px; font-family: var(--font);
+    text-align: right;
+  }
+  .form-row input::placeholder, .form-row textarea::placeholder { color: var(--text3); }
+  textarea.notes-field {
+    resize: none; text-align: left; width: 100%;
+    min-height: 100px; line-height: 1.5;
+    padding: 0;
+  }
+  .form-photo {
+    background: var(--bg3); border-radius: var(--radius-lg);
+    padding: 40px 16px; text-align: center; cursor: pointer;
+    color: var(--accent); font-size: 17px;
+    border: 1.5px dashed var(--bg4);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* NFC animation */
+  .nfc-anim {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px; gap: 16px;
+  }
+  .nfc-rings {
+    width: 80px; height: 80px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ring {
+    position: absolute; border-radius: 50%;
+    border: 2px solid var(--accent); opacity: 0;
+    animation: pulse 2s ease-out infinite;
+  }
+  .ring:nth-child(1) { width: 30px; height: 30px; animation-delay: 0s; }
+  .ring:nth-child(2) { width: 55px; height: 55px; animation-delay: .4s; }
+  .ring:nth-child(3) { width: 80px; height: 80px; animation-delay: .8s; }
+  @keyframes pulse {
+    0%   { opacity: 0; transform: scale(.6); }
+    40%  { opacity: 0.8; }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  .nfc-label { font-size: 17px; color: var(--text2); text-align: center; }
+
+  /* History entry */
+  .history-entry {
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--sep);
+  }
+  .history-entry:last-child { border-bottom: none; }
+  .history-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .history-time { font-size: 12px; color: var(--text2); }
+  .history-tag-chip {
+    font-size: 10px; font-weight: 500;
+    background: rgba(0,122,255,.18); color: var(--accent);
+    padding: 2px 7px; border-radius: 10px;
+  }
+  .history-note { font-size: 15px; color: var(--text1); margin-bottom: 2px; }
+  .history-elapsed { font-size: 12px; color: var(--text3); }
+
+  /* Summary header */
+  .summary-card {
+    background: var(--bg2); border-radius: var(--radius-lg);
+    padding: 14px 16px; margin: 0 0 16px;
+  }
+  .summary-title { font-size: 15px; color: var(--text2); margin-bottom: 2px; }
+  .summary-time  { font-size: 22px; font-weight: 700; color: var(--text1); }
+  .summary-note  { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  /* Swipe-to-delete row wrapper */
+  .swipe-row {
+    position: relative; overflow: hidden;
+  }
+  .swipe-row .delete-action {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    background: var(--red); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    width: 80px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transform: translateX(100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    border-radius: 0;
+    border: none; font-family: var(--font);
+    flex-shrink: 0;
+  }
+  .swipe-row.swiped .delete-action { transform: translateX(0); }
+  .swipe-row .list-cell {
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+  }
+  .swipe-row.swiped .list-cell { transform: translateX(-80px); }
+
+  /* Tag row inline delete */
+  .tag-row-actions {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+
+  /* Project detail header */
+  .detail-header {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 16px 12px;
+  }
+  .detail-thumb {
+    width: 72px; height: 72px; border-radius: 10px;
+    background: var(--fill); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .detail-info { flex: 1; }
+  .detail-info .link-row {
+    display: flex; align-items: center; gap: 4px;
+    color: var(--accent); font-size: 15px; cursor: pointer; margin-top: 4px;
+  }
+  .detail-info .link-row svg { width: 14px; height: 14px; fill: none; stroke: var(--accent); stroke-width: 2; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 32px; gap: 12px; color: var(--text3);
+  }
+  .empty-state .empty-icon { font-size: 48px; }
+  .empty-state .empty-title { font-size: 22px; font-weight: 600; color: var(--text2); }
+  .empty-state .empty-msg { font-size: 15px; text-align: center; line-height: 1.5; }
+
+  /* NFC success checkmark */
+  .success-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(52,199,89,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* Toolbar in sheet */
+  .toolbar-sep { height: 0.5px; background: var(--sep); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="app">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <!-- signal -->
+      <svg viewBox="0 0 17 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="3.5" height="12" rx="1" opacity=".3"/></svg>
+      <!-- wifi -->
+      <svg viewBox="0 0 16 12" width="16"><path d="M8 9.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" fill="currentColor"/><path d="M8 6C6.1 6 4.4 6.8 3.1 8l1.4 1.4C5.5 8.6 6.7 8 8 8s2.5.6 3.5 1.4L12.9 8C11.6 6.8 9.9 6 8 6z" fill="currentColor"/><path d="M8 2C4.7 2 1.7 3.4 0 5.7l1.4 1.4C2.9 5.1 5.3 3.8 8 3.8s5.1 1.3 6.6 3.3L16 5.7C14.3 3.4 11.3 2 8 2z" fill="currentColor"/></svg>
+      <!-- battery -->
+      <svg viewBox="0 0 25 12" width="25"><rect x="0" y="1" width="22" height="10" rx="3" stroke="currentColor" stroke-width="1" fill="none"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="currentColor" opacity=".4"/><rect x="1" y="2" width="16" height="8" rx="2" fill="currentColor"/></svg>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screens" id="screens">
+
+    <!-- ── SCREEN 0: HOME ── -->
+    <div class="screen active" id="screen-home">
+      <div class="nav-bar">
+        <div class="nav-left">
+          <button class="nav-btn" onclick="showScanSheet()">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Scan
+          </button>
+        </div>
+        <span class="nav-title"></span>
+        <div class="nav-right">
+          <button class="nav-btn icon-only" onclick="showSheet('sheet-create')">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="large-title">Stitch Clip</div>
+      <div class="scroll">
+        <div style="height:8px"></div>
+        <div class="list-group" style="margin:0 16px">
+
+          <!-- Project 1 -->
+          <div class="swipe-row" id="proj-row-blanket">
+            <div class="list-cell" onclick="navTo('screen-detail-blanket')">
+              <div class="thumb"><div class="thumb-placeholder">🧶</div></div>
+              <div class="cell-main">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cell-title">My Cozy Blanket</span>
+                </div>
+                <div class="cell-subtitle">Started Mar 15 · 5 writes · ~2.25 hrs</div>
+              </div>
+              <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+            </div>
+            <button class="delete-action" onclick="confirmDelete('proj-row-blanket','alert-delete-project','My Cozy Blanket')">Delete</button>
+          </div>
+
+          <!-- Project 2 -->
+          <div class="swipe-row" id="proj-row-booties">
+            <div class="list-cell" onclick="navTo('screen-detail-booties')">
+              <div class="thumb" style="background:rgba(52,199,89,.12)"><div class="thumb-placeholder">👶</div></div>
+              <div class="cell-main">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cell-title">Baby Booties</span>
+                  <span class="badge green">✓ Done</span>
+                </div>
+                <div class="cell-subtitle">Completed Apr 10 · 3 writes</div>
+              </div>
+              <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+            </div>
+            <button class="delete-action" onclick="confirmDelete('proj-row-booties','alert-delete-project','Baby Booties')">Delete</button>
+          </div>
+
+        </div>
+        <div class="safe-bottom"></div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 1: PROJECT DETAIL (Blanket) ── -->
+    <div class="screen" id="screen-detail-blanket">
+      <div class="nav-bar">
+        <div class="nav-left">
+          <button class="nav-btn" onclick="navBack()">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <span class="nav-title">My Cozy Blanket</span>
+        <div class="nav-right">
+          <button class="nav-btn" onclick="showAlert('alert-complete')">···</button>
+        </div>
+      </div>
+
+      <!-- Detail header -->
+      <div class="detail-header">
+        <div class="detail-thumb">🧶</div>
+        <div class="detail-info">
+          <div style="color:var(--text2);font-size:13px">Ongoing</div>
+          <div class="link-row" onclick="alert('Opens Etsy in Safari')">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke-linecap="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke-linecap="round"/></svg>
+            View Pattern
+          </div>
+        </div>
+      </div>
+
+      <!-- Segmented tabs -->
+      <div class="segmented">
+        <button class="seg-btn active" id="seg-tags" onclick="switchTab('tags')">Tags</button>
+        <button class="seg-btn" id="seg-history" onclick="switchTab('history')">History</button>
+      </div>
+
+      <!-- Tags tab -->
+      <div class="scroll" id="tab-tags">
+        <div style="height:8px"></div>
+        <div class="list-group" style="margin:0 16px">
+          <div class="swipe-row" id="tag-row-1">
+            <div class="list-cell" onclick="showSheet('sheet-edit-tag')">
+              <div class="cell-main">
+                <div class="cell-title">Tag 1</div>
+                <div class="cell-subtitle">Row 15, color change at end of row</div>
+                <div class="cell-caption">Last write: Mar 15, 7:30 PM</div>
+              </div>
+              <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+            </div>
+            <button class="delete-action" onclick="confirmDelete('tag-row-1','alert-delete-tag','Tag 1')">Delete</button>
+          </div>
+          <div class="swipe-row" id="tag-row-2">
+            <div class="list-cell" onclick="showSheet('sheet-edit-tag2')">
+              <div class="cell-main">
+                <div class="cell-title">Tag 2</div>
+                <div class="cell-subtitle">Starting the border section</div>
+                <div class="cell-caption">Last write: Apr 8, 7:15 PM</div>
+              </div>
+              <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+            </div>
+            <button class="delete-action" onclick="confirmDelete('tag-row-2','alert-delete-tag','Tag 2')">Delete</button>
+          </div>
+          <div class="swipe-row" id="tag-row-3">
+            <div class="list-cell" onclick="showSheet('sheet-edit-tag')">
+              <div class="cell-main">
+                <div class="cell-title">Tag 3</div>
+                <div class="cell-subtitle">Final stitches, almost done!</div>
+                <div class="cell-caption">Last write: Apr 10, 2:30 PM</div>
+              </div>
+              <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+            </div>
+            <button class="delete-action" onclick="confirmDelete('tag-row-3','alert-delete-tag','Tag 3')">Delete</button>
+          </div>
+        </div>
+        <div style="height:100px"></div>
+        <div class="safe-bottom"></div>
+      </div>
+
+      <!-- History tab (hidden) -->
+      <div class="scroll" id="tab-history" style="display:none">
+        <div style="padding:12px 16px 0">
+          <div class="summary-card">
+            <div class="summary-title">Started Mar 15, 2026 · 5 write events</div>
+            <div class="summary-time">~2.25 hrs</div>
+            <div class="summary-note">Estimated based on time between tag writes</div>
+          </div>
+          <div class="list-group">
+            <div class="history-entry" style="padding:10px 16px">
+              <div class="history-meta">
+                <span class="history-time">Apr 10, 2:30 PM</span>
+                <span class="history-tag-chip">Tag 3</span>
+              </div>
+              <div class="history-note">Final stitches, almost done!</div>
+              <div class="history-elapsed">+45 min since last write</div>
+            </div>
+            <div class="history-entry" style="padding:10px 16px">
+              <div class="history-meta">
+                <span class="history-time">Apr 10, 1:45 PM</span>
+                <span class="history-tag-chip">Tag 2</span>
+              </div>
+              <div class="history-note">Finished the border, looks great</div>
+              <div class="history-elapsed">+15 min since last write</div>
+            </div>
+            <div class="history-entry" style="padding:10px 16px">
+              <div class="history-meta">
+                <span class="history-time">Apr 8, 7:15 PM</span>
+                <span class="history-tag-chip">Tag 2</span>
+              </div>
+              <div class="history-note">Starting the border section</div>
+              <div class="history-elapsed" style="color:var(--text3)">+1.5 hrs since last write (session gap)</div>
+            </div>
+            <div class="history-entry" style="padding:10px 16px">
+              <div class="history-meta">
+                <span class="history-time">Mar 15, 7:30 PM</span>
+                <span class="history-tag-chip">Tag 1</span>
+              </div>
+              <div class="history-note">Row 20, continuing double crochet</div>
+              <div class="history-elapsed">+1.5 hrs since last write</div>
+            </div>
+            <div class="history-entry" style="padding:10px 16px">
+              <div class="history-meta">
+                <span class="history-time">Mar 15, 6:00 PM</span>
+                <span class="history-tag-chip">Tag 1</span>
+              </div>
+              <div class="history-note">Row 15, color change at end of row</div>
+              <div class="history-elapsed">(first write)</div>
+            </div>
+          </div>
+        </div>
+        <div class="safe-bottom"></div>
+      </div>
+
+      <!-- Add Tag FAB -->
+      <div id="add-tag-fab" style="position:absolute;bottom:34px;left:0;right:0;padding:0 16px">
+        <button class="btn-primary" onclick="showSheet('sheet-add-tag')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+          Add Tag
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 2: PROJECT DETAIL (Booties) ── -->
+    <div class="screen" id="screen-detail-booties">
+      <div class="nav-bar">
+        <div class="nav-left">
+          <button class="nav-btn" onclick="navBack()">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <span class="nav-title">Baby Booties</span>
+        <div class="nav-right">
+          <button class="nav-btn" onclick="showAlert('alert-uncomplete')">···</button>
+        </div>
+      </div>
+      <div class="detail-header">
+        <div class="detail-thumb" style="background:rgba(52,199,89,.12)">👶</div>
+        <div class="detail-info">
+          <div><span class="badge green" style="font-size:12px">✓ Completed Apr 10</span></div>
+        </div>
+      </div>
+      <div class="segmented" style="margin-top:4px">
+        <button class="seg-btn active">Tags</button>
+        <button class="seg-btn">History</button>
+      </div>
+      <div class="scroll">
+        <div style="height:8px"></div>
+        <div class="list-group" style="margin:0 16px">
+          <div class="list-cell">
+            <div class="cell-main">
+              <div class="cell-title">Tag 1</div>
+              <div class="cell-subtitle">Left bootie — done!</div>
+              <div class="cell-caption">Last write: Apr 10, 11:00 AM</div>
+            </div>
+            <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+          </div>
+          <div class="list-cell">
+            <div class="cell-main">
+              <div class="cell-title">Tag 2</div>
+              <div class="cell-subtitle">Right bootie — done!</div>
+              <div class="cell-caption">Last write: Apr 10, 2:00 PM</div>
+            </div>
+            <div class="cell-chevron"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></div>
+          </div>
+        </div>
+        <div class="safe-bottom"></div>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- ══════════════════════════════════════
+       SHEETS
+  ══════════════════════════════════════ -->
+
+  <!-- SCAN Sheet -->
+  <div class="sheet-overlay" id="overlay-scan" onclick="closeSheet('sheet-scan')"></div>
+  <div class="sheet" id="sheet-scan" style="height:360px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <span></span>
+      <span class="sheet-title">Scan Tag</span>
+      <button class="nav-btn" onclick="closeSheet('sheet-scan')">Cancel</button>
+    </div>
+    <div class="sheet-body" id="scan-body">
+      <div class="nfc-anim">
+        <div class="nfc-rings">
+          <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+        </div>
+        <div class="nfc-label">Hold iPhone near<br>an NFC tag</div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn-primary" onclick="simulateScan()">Simulate Scan</button>
+    </div>
+  </div>
+
+  <!-- SCAN RESULT Sheet -->
+  <div class="sheet-overlay" id="overlay-result" onclick="closeSheet('sheet-result')"></div>
+  <div class="sheet" id="sheet-result" style="height:420px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <span></span>
+      <span class="sheet-title">Tag Found</span>
+      <button class="nav-btn" onclick="closeSheet('sheet-result')">Dismiss</button>
+    </div>
+    <div class="sheet-body">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:48px">🧶</div>
+      </div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px">My Cozy Blanket</div>
+      <div style="color:var(--accent);font-size:14px;margin-bottom:16px;display:flex;align-items:center;gap:4px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        etsy.com/listing/cozy-blanket-pattern
+      </div>
+      <div style="color:var(--text2);font-size:12px;margin-bottom:4px">NOTES ON TAG</div>
+      <div style="font-size:16px;margin-bottom:24px">Row 15, color change at end of row</div>
+    </div>
+    <div class="sheet-footer" style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-primary" onclick="closeSheet('sheet-result');navTo('screen-detail-blanket')">Open Project</button>
+      <button class="btn-secondary" onclick="closeSheet('sheet-result')">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- ORPHANED TAG Sheet -->
+  <div class="sheet-overlay" id="overlay-orphan" onclick="closeSheet('sheet-orphan')"></div>
+  <div class="sheet" id="sheet-orphan" style="height:420px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <span></span>
+      <span class="sheet-title" style="color:var(--yellow)">⚠ Unlinked Tag</span>
+      <button class="nav-btn" onclick="closeSheet('sheet-orphan')">Dismiss</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:20px;font-weight:700;margin-bottom:16px">Tag not linked to a project</div>
+      <div style="color:var(--text2);font-size:12px;margin-bottom:4px">NOTES ON TAG</div>
+      <div style="font-size:16px;margin-bottom:16px">Row 8, switching to smaller hook</div>
+      <div style="color:var(--text2);font-size:12px;margin-bottom:4px">LAST WRITTEN</div>
+      <div style="font-size:16px;margin-bottom:24px">Jan 3, 2026, 3:45 PM</div>
+    </div>
+    <div class="sheet-footer" style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-primary" onclick="showAlert('alert-link')">Link to a Project</button>
+      <button class="btn-secondary" onclick="closeSheet('sheet-orphan')">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- CREATE PROJECT Sheet -->
+  <div class="sheet-overlay" id="overlay-create" onclick="closeSheet('sheet-create')"></div>
+  <div class="sheet" id="sheet-create" style="height:580px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <button class="nav-btn" onclick="closeSheet('sheet-create')">Cancel</button>
+      <span class="sheet-title">New Project</span>
+      <button class="nav-btn bold" onclick="closeSheet('sheet-create')" style="font-weight:600">Create</button>
+    </div>
+    <div class="sheet-body">
+      <div class="form-section">
+        <div class="form-group">
+          <div class="form-row">
+            <label>Name</label>
+            <input type="text" placeholder="Project name" id="new-project-name">
+          </div>
+          <div class="form-row">
+            <label>Pattern</label>
+            <input type="url" placeholder="https://..." id="new-pattern-link">
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-label">Image</div>
+        <div class="form-photo" onclick="alert('Photo picker opens here')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+          Choose Photo
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TAG Sheet -->
+  <div class="sheet-overlay" id="overlay-add-tag" onclick="closeSheet('sheet-add-tag')"></div>
+  <div class="sheet" id="sheet-add-tag" style="height:440px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <button class="nav-btn" onclick="closeSheet('sheet-add-tag')">Cancel</button>
+      <span class="sheet-title">Add Tag</span>
+      <span></span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-section">
+        <div class="form-label">Notes (optional)</div>
+        <div class="form-group">
+          <div class="form-row">
+            <textarea class="notes-field" placeholder="e.g. Row 12, switching yarn color" id="add-tag-notes"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn-primary" onclick="simulateWrite('sheet-add-tag')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Write to Tag
+      </button>
+    </div>
+  </div>
+
+  <!-- EDIT TAG Sheet -->
+  <div class="sheet-overlay" id="overlay-edit-tag" onclick="closeSheet('sheet-edit-tag')"></div>
+  <div class="sheet" id="sheet-edit-tag" style="height:440px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <button class="nav-btn" onclick="closeSheet('sheet-edit-tag')">Cancel</button>
+      <span class="sheet-title">Edit Tag</span>
+      <span></span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-section">
+        <div class="form-label">Notes</div>
+        <div class="form-group">
+          <div class="form-row">
+            <textarea class="notes-field" id="edit-tag-notes">Row 15, color change at end of row</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn-primary" onclick="simulateWrite('sheet-edit-tag')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Write to Tag
+      </button>
+    </div>
+  </div>
+
+  <!-- EDIT TAG 2 Sheet -->
+  <div class="sheet-overlay" id="overlay-edit-tag2" onclick="closeSheet('sheet-edit-tag2')"></div>
+  <div class="sheet" id="sheet-edit-tag2" style="height:440px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav">
+      <button class="nav-btn" onclick="closeSheet('sheet-edit-tag2')">Cancel</button>
+      <span class="sheet-title">Edit Tag</span>
+      <span></span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-section">
+        <div class="form-label">Notes</div>
+        <div class="form-group">
+          <div class="form-row">
+            <textarea class="notes-field" id="edit-tag2-notes">Starting the border section</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn-primary" onclick="simulateWrite('sheet-edit-tag2')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Write to Tag
+      </button>
+    </div>
+  </div>
+
+  <!-- NFC WRITING Sheet (shared) -->
+  <div class="sheet-overlay" id="overlay-nfc-writing"></div>
+  <div class="sheet" id="sheet-nfc-writing" style="height:280px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-nav"><span></span><span class="sheet-title">Writing Tag</span><span></span></div>
+    <div class="sheet-body" id="nfc-writing-body">
+      <div class="nfc-anim">
+        <div class="nfc-rings">
+          <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+        </div>
+        <div class="nfc-label" id="nfc-label">Hold iPhone near NFC tag…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ALERTS
+  ══════════════════════════════════════ -->
+
+  <div class="alert-overlay" id="alert-complete">
+    <div class="alert-box">
+      <div class="alert-title">Mark as Complete?</div>
+      <div class="alert-msg">This will mark My Cozy Blanket as finished.</div>
+      <div class="alert-actions">
+        <button class="alert-btn" onclick="closeAlert('alert-complete')">Cancel</button>
+        <button class="alert-btn bold" onclick="closeAlert('alert-complete')">Mark Complete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alert-uncomplete">
+    <div class="alert-box">
+      <div class="alert-title">Mark as Ongoing?</div>
+      <div class="alert-msg">This will move Baby Booties back to active projects.</div>
+      <div class="alert-actions">
+        <button class="alert-btn" onclick="closeAlert('alert-uncomplete')">Cancel</button>
+        <button class="alert-btn bold" onclick="closeAlert('alert-uncomplete')">Mark Ongoing</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alert-link">
+    <div class="alert-box">
+      <div class="alert-title">Link to Project</div>
+      <div class="alert-msg">Choose a project to link this tag to:</div>
+      <div style="border-top:0.5px solid var(--sep)">
+        <button class="alert-btn" style="display:block;width:100%;border-bottom:0.5px solid var(--sep)" onclick="closeAlert('alert-link');closeSheet('sheet-orphan');showAlert('alert-linked')">My Cozy Blanket</button>
+        <button class="alert-btn" style="display:block;width:100%;border-bottom:0.5px solid var(--sep)" onclick="closeAlert('alert-link');closeSheet('sheet-orphan');showAlert('alert-linked')">Baby Booties</button>
+        <button class="alert-btn" style="display:block;width:100%;color:var(--accent)" onclick="closeAlert('alert-link')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alert-linked">
+    <div class="alert-box">
+      <div class="alert-title">✓ Tag Linked</div>
+      <div class="alert-msg">Tag linked to My Cozy Blanket successfully.</div>
+      <div class="alert-actions">
+        <button class="alert-btn bold" onclick="closeAlert('alert-linked')">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alert-delete-project">
+    <div class="alert-box">
+      <div class="alert-title" id="alert-delete-project-title">Delete Project?</div>
+      <div class="alert-msg">This will permanently delete the project and all its tag history. Physical tags are unaffected.</div>
+      <div class="alert-actions">
+        <button class="alert-btn" onclick="cancelDelete('alert-delete-project')">Cancel</button>
+        <button class="alert-btn destructive bold" onclick="commitDelete('alert-delete-project')">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alert-delete-tag">
+    <div class="alert-box">
+      <div class="alert-title" id="alert-delete-tag-title">Remove Tag?</div>
+      <div class="alert-msg">This unlinks the tag from the project and removes its history. The physical NFC tag is unaffected.</div>
+      <div class="alert-actions">
+        <button class="alert-btn" onclick="cancelDelete('alert-delete-tag')">Cancel</button>
+        <button class="alert-btn destructive bold" onclick="commitDelete('alert-delete-tag')">Remove</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<script>
+  // ── Swipe-to-delete ──
+  let pendingDeleteRow = null;
+  let pendingDeleteAlert = null;
+  let activeSwipeRow = null;
+
+  function initSwipe(el) {
+    let startX = 0, startY = 0, dragging = false;
+    const onStart = e => {
+      const t = e.touches ? e.touches[0] : e;
+      startX = t.clientX; startY = t.clientY; dragging = true;
+    };
+    const onMove = e => {
+      if (!dragging) return;
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - startX;
+      const dy = Math.abs(t.clientY - startY);
+      if (dy > 10 && Math.abs(dx) < dy) { dragging = false; return; }
+      if (dx < -20) {
+        if (activeSwipeRow && activeSwipeRow !== el) closeSwipe(activeSwipeRow);
+        el.classList.add('swiped');
+        activeSwipeRow = el;
+      } else if (dx > 10) {
+        closeSwipe(el);
+      }
+    };
+    const onEnd = () => { dragging = false; };
+    el.addEventListener('mousedown', onStart);
+    el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseup', onEnd);
+    el.addEventListener('touchstart', onStart, {passive:true});
+    el.addEventListener('touchmove', onMove, {passive:true});
+    el.addEventListener('touchend', onEnd);
+  }
+
+  function closeSwipe(el) {
+    el.classList.remove('swiped');
+    if (activeSwipeRow === el) activeSwipeRow = null;
+  }
+
+  function confirmDelete(rowId, alertId, name) {
+    pendingDeleteRow   = rowId;
+    pendingDeleteAlert = alertId;
+    const titleEl = document.getElementById(alertId + '-title');
+    if (titleEl) titleEl.textContent = alertId.includes('project')
+      ? `Delete "${name}"?`
+      : `Remove "${name}"?`;
+    showAlert(alertId);
+  }
+
+  function cancelDelete(alertId) {
+    closeAlert(alertId);
+    if (pendingDeleteRow) closeSwipe(document.getElementById(pendingDeleteRow));
+    pendingDeleteRow = pendingDeleteAlert = null;
+  }
+
+  function commitDelete(alertId) {
+    closeAlert(alertId);
+    if (pendingDeleteRow) {
+      const row = document.getElementById(pendingDeleteRow);
+      if (row) {
+        row.style.transition = 'opacity .25s, max-height .3s';
+        row.style.opacity = '0';
+        row.style.maxHeight = '0';
+        row.style.overflow = 'hidden';
+        setTimeout(() => row.remove(), 350);
+      }
+    }
+    pendingDeleteRow = pendingDeleteAlert = null;
+  }
+
+  // Close any open swipe row when tapping elsewhere
+  document.addEventListener('click', e => {
+    if (activeSwipeRow && !activeSwipeRow.contains(e.target)) {
+      closeSwipe(activeSwipeRow);
+    }
+  });
+
+  // Initialise all swipe rows after DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.swipe-row').forEach(initSwipe);
+  });
+
+  // ── Navigation ──
+  const stack = ['screen-home'];
+
+  function navTo(id) {
+    const current = document.getElementById(stack[stack.length - 1]);
+    const next    = document.getElementById(id);
+    current.classList.add('behind');
+    next.classList.add('active');
+    stack.push(id);
+  }
+
+  function navBack() {
+    if (stack.length <= 1) return;
+    const current = document.getElementById(stack.pop());
+    const prev    = document.getElementById(stack[stack.length - 1]);
+    current.classList.remove('active');
+    prev.classList.remove('behind');
+    // reset tabs to Tags when going back to detail
+    if (stack[stack.length - 1] === 'screen-home') {
+      resetTabs();
+    }
+    setTimeout(() => current.classList.remove('behind'), 350);
+  }
+
+  function resetTabs() {
+    const tags    = document.getElementById('tab-tags');
+    const history = document.getElementById('tab-history');
+    const fab     = document.getElementById('add-tag-fab');
+    if (tags) { tags.style.display = ''; history.style.display = 'none'; }
+    const s1 = document.getElementById('seg-tags');
+    const s2 = document.getElementById('seg-history');
+    if (s1) { s1.classList.add('active'); s2.classList.remove('active'); }
+    if (fab) fab.style.display = '';
+  }
+
+  // ── Tab switching ──
+  function switchTab(tab) {
+    const tagsEl    = document.getElementById('tab-tags');
+    const historyEl = document.getElementById('tab-history');
+    const seg1      = document.getElementById('seg-tags');
+    const seg2      = document.getElementById('seg-history');
+    const fab       = document.getElementById('add-tag-fab');
+
+    if (tab === 'tags') {
+      tagsEl.style.display    = '';
+      historyEl.style.display = 'none';
+      seg1.classList.add('active');
+      seg2.classList.remove('active');
+      fab.style.display = '';
+    } else {
+      tagsEl.style.display    = 'none';
+      historyEl.style.display = '';
+      seg1.classList.remove('active');
+      seg2.classList.add('active');
+      fab.style.display = 'none';
+    }
+  }
+
+  // ── Sheets ──
+  function showSheet(id) {
+    const overlayId = 'overlay-' + id.replace('sheet-', '');
+    const overlay   = document.getElementById(overlayId);
+    const sheet     = document.getElementById(id);
+    if (overlay) { overlay.classList.add('visible'); }
+    if (sheet)   { requestAnimationFrame(() => sheet.classList.add('open')); }
+  }
+
+  function closeSheet(id) {
+    const overlayId = 'overlay-' + id.replace('sheet-', '');
+    const overlay   = document.getElementById(overlayId);
+    const sheet     = document.getElementById(id);
+    if (sheet)   { sheet.classList.remove('open'); }
+    if (overlay) { setTimeout(() => overlay.classList.remove('visible'), 300); }
+  }
+
+  // ── Alerts ──
+  function showAlert(id) {
+    document.getElementById(id).classList.add('visible');
+  }
+  function closeAlert(id) {
+    document.getElementById(id).classList.remove('visible');
+  }
+
+  // ── Scan simulation ──
+  function showScanSheet() { showSheet('sheet-scan'); }
+
+  function simulateScan() {
+    closeSheet('sheet-scan');
+    // 50% chance orphaned tag for demo
+    setTimeout(() => {
+      if (Math.random() > 0.4) {
+        showSheet('sheet-result');
+      } else {
+        showSheet('sheet-orphan');
+      }
+    }, 200);
+  }
+
+  // ── NFC Write simulation ──
+  let writeSource = null;
+
+  function simulateWrite(sourceSheet) {
+    writeSource = sourceSheet;
+    closeSheet(sourceSheet);
+    setTimeout(() => {
+      showSheet('sheet-nfc-writing');
+      const label = document.getElementById('nfc-label');
+      label.textContent = 'Hold iPhone near NFC tag…';
+      document.getElementById('nfc-writing-body').innerHTML = `
+        <div class="nfc-anim">
+          <div class="nfc-rings">
+            <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+          </div>
+          <div class="nfc-label">Hold iPhone near NFC tag…</div>
+        </div>`;
+
+      // Simulate success after 2s
+      setTimeout(() => {
+        document.getElementById('nfc-writing-body').innerHTML = `
+          <div class="nfc-anim" style="gap:12px">
+            <div class="success-icon">✓</div>
+            <div class="nfc-label" style="color:var(--green);font-weight:600">Tag written successfully</div>
+          </div>`;
+        setTimeout(() => closeSheet('sheet-nfc-writing'), 1200);
+      }, 2000);
+    }, 200);
+  }
+</script>
+</body>
+</html>
