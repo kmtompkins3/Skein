@@ -135,8 +135,7 @@ struct HistoryTabView: View {
                 .padding(.top, 18)
 
                 HStack {
-                    Text(project.startDate.formatted(.dateTime.month(.abbreviated).day()))
-                        .uppercased()
+                    Text(project.startDate.formatted(.dateTime.month(.abbreviated).day()).uppercased())
                     Spacer()
                     Text("·")
                     Spacer()

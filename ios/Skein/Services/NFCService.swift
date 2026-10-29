@@ -92,7 +92,7 @@ final class NFCService: NSObject, ObservableObject {
     }
 
     private func parseRecord(_ record: NFCNDEFPayload) -> NFCTagPayload? {
-        guard let (text, _) = record.wellKnownTypeTextPayload(),
+        guard let text = record.wellKnownTypeTextPayload().0,
               let payload = try? NFCTagPayload.from(jsonString: text)
         else { return nil }
         return payload
