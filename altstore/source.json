@@ -18,18 +18,20 @@
       "category": "lifestyle",
       "screenshotURLs": [],
       "appPermissions": {
-        "entitlements": ["com.apple.developer.nfc.readersession.formats"],
+        "entitlements": [
+          "com.apple.developer.nfc.readersession.formats"
+        ],
         "privacy": {
           "NFCReaderUsageDescription": "Skein reads and writes the NFC stitch clips on your projects so every tap is tracked."
         }
       },
       "versions": [
         {
-          "version": "1.0.0",
-          "buildVersion": "1",
+          "version": "1.0.1",
+          "buildVersion": "2",
           "date": "2026-10-29",
-          "downloadURL": "https://github.com/kmtompkins3/Skein/releases/download/v1.0.0/Skein.ipa",
-          "size": 0,
+          "downloadURL": "https://github.com/kmtompkins3/Skein/releases/download/v1.0.1/Skein.ipa",
+          "size": 3382024,
           "minOSVersion": "17.0"
         }
       ]
