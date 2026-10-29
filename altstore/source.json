@@ -1,0 +1,39 @@
+{
+  "name": "Skein",
+  "identifier": "com.kmtompkins3.skein.source",
+  "subtitle": "Tap. Track. Stitch.",
+  "description": "Skein tracks your crochet and knitting projects with NFC stitch clips.",
+  "iconURL": "https://raw.githubusercontent.com/kmtompkins3/Skein/main/altstore/icon.png",
+  "website": "https://github.com/kmtompkins3/Skein",
+  "tintColor": "#FF6B35",
+  "apps": [
+    {
+      "name": "Skein",
+      "bundleIdentifier": "com.kmtompkins3.skein",
+      "developerName": "kmtompkins3",
+      "subtitle": "Tap. Track. Stitch.",
+      "localizedDescription": "Skein tracks your crochet and knitting projects with NFC stitch clips. Tap a clip to log a session, see your history and time on the needles, and keep every project in one place.",
+      "iconURL": "https://raw.githubusercontent.com/kmtompkins3/Skein/main/altstore/icon.png",
+      "tintColor": "#FF6B35",
+      "category": "lifestyle",
+      "screenshotURLs": [],
+      "appPermissions": {
+        "entitlements": ["com.apple.developer.nfc.readersession.formats"],
+        "privacy": {
+          "NFCReaderUsageDescription": "Skein reads and writes the NFC stitch clips on your projects so every tap is tracked."
+        }
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "1",
+          "date": "2026-10-29",
+          "downloadURL": "https://github.com/kmtompkins3/Skein/releases/download/v1.0.0/Skein.ipa",
+          "size": 0,
+          "minOSVersion": "17.0"
+        }
+      ]
+    }
+  ],
+  "news": []
+}

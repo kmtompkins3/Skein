@@ -1,0 +1,67 @@
+name: Build Skein IPA
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen ldid jq
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Archive (unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild archive \
+            -project Skein.xcodeproj \
+            -scheme Skein \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Skein.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Package IPA
+        working-directory: ios
+        run: |
+          APP=build/Skein.xcarchive/Products/Applications/Skein.app
+          # Pseudo-sign so AltStore can read the NFC entitlement when it re-signs the app.
+          ldid -SSkein/Skein.entitlements "$APP/Skein"
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          (cd build && zip -qry Skein.ipa Payload)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Skein.ipa
+          path: ios/build/Skein.ipa
+
+      - name: Publish release and update AltStore source
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SIZE=$(stat -f%z ios/build/Skein.ipa)
+          gh release create "$GITHUB_REF_NAME" ios/build/Skein.ipa --title "Skein $VERSION" --generate-notes
+          jq --arg v "$VERSION" --arg b "${GITHUB_RUN_NUMBER}" --arg d "$(date -u +%Y-%m-%d)" \
+             --arg u "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/Skein.ipa" \
+             --argjson s "$SIZE" \
+             '.apps[0].versions = [{version:$v, buildVersion:$b, date:$d, downloadURL:$u, size:$s, minOSVersion:"17.0"}]' \
+             altstore/source.json > altstore/source.tmp && mv altstore/source.tmp altstore/source.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add altstore/source.json
+          git commit -m "Update AltStore source for $GITHUB_REF_NAME"
+          git push origin HEAD:main

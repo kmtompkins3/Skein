@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Project | Status | Entry point | PRD | Tasks |
 |---------|--------|-------------|-----|-------|
 | Web app (Android Chrome) | MVP complete | `src/index.html` | `docs/PRD.md` | `docs/tasks.md` |
-| iOS native app | **Active development** | `ios/` (to be created) | `docs/PRD_iOS_Native.md` | `docs/TASKS_iOS_Native.md` |
+| iOS native app | **Active development** | `ios/Skein/` (XcodeGen `ios/project.yml`) | `docs/PRD_iOS_Native.md` | `docs/TASKS_iOS_Native.md` |
 
 ---
 
@@ -44,16 +44,16 @@ NFC is unavailable on the iOS Simulator — all NFC flows require a **physical i
 
 ```bash
 # Build (Simulator, for UI testing only)
-xcodebuild -scheme NFCStitchClip \
+xcodebuild -scheme Skein \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   build
 
 # Run unit tests (Simulator)
-xcodebuild test -scheme NFCStitchClip \
+xcodebuild test -scheme Skein \
   -destination 'platform=iOS Simulator,name=iPhone 16'
 
 # Build for device (requires provisioning profile)
-xcodebuild -scheme NFCStitchClip \
+xcodebuild -scheme Skein \
   -destination 'generic/platform=iOS' \
   build
 ```
@@ -62,10 +62,14 @@ xcodebuild -scheme NFCStitchClip \
 
 Both of these must be in place before any NFC code will compile or run:
 
-1. `NFCStitchClip.entitlements` — add key `com.apple.developer.nfc.readersession.formats` with value `NDEF`
+1. `Skein.entitlements` — add key `com.apple.developer.nfc.readersession.formats` with value `NDEF`
 2. `Info.plist` — add key `NFCReaderUsageDescription` with a user-facing string
 
-Dark mode is enforced at the app level, not per-view: add `UIUserInterfaceStyle = Dark` to `Info.plist`.
+The app is light-only (Skein cream palette): `.preferredColorScheme(.light)` in `SkeinApp.swift` and `UIUserInterfaceStyle = Light` in `project.yml`.
+
+### AltStore Distribution
+
+`ios/project.yml` is the source of truth for the Xcode project and Info.plist (run `xcodegen generate` in `ios/`). Pushing a `v*` tag runs `.github/workflows/build-ipa.yml`, which builds an unsigned `Skein.ipa`, publishes it as a GitHub release and updates `altstore/source.json`. Add `https://raw.githubusercontent.com/kmtompkins3/Skein/main/altstore/source.json` as a source in AltStore. NFC needs a paid Apple Developer account; free Apple IDs cannot grant the Core NFC entitlement.
 
 ### NFC Tag Format
 

@@ -59,9 +59,7 @@ struct HomeView: View {
             .disabled(nfc.isSessionActive)
         }
         ToolbarItem(placement: .principal) {
-            Text("Skein")
-                .font(Font.custom("Helvetica Neue", size: 20).weight(.bold))
-                .foregroundStyle(Color.skeinCharcoal)
+            SkeinWordmark(size: 20)
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button { showingCreateProject = true } label: {
@@ -77,7 +75,7 @@ struct HomeView: View {
 
     private var headline: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("PROJECTS · \(projects.count) ACTIVE")
+            Text("PROJECTS · \(projects.filter { !$0.isCompleted }.count) ACTIVE")
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundStyle(Color.skeinMuted)
                 .kerning(2)
@@ -93,6 +91,38 @@ struct HomeView: View {
         .padding(.bottom, 16)
     }
 
+    /// Work time per calendar day for the last 7 days (oldest first), using the 12-hour session-gap rule.
+    private var weekWork: [TimeInterval] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        var buckets = [TimeInterval](repeating: 0, count: 7)
+        for project in projects {
+            let events = project.allWriteEvents.sorted { $0.timestamp < $1.timestamp }
+            guard events.count > 1 else { continue }
+            for i in 1..<events.count {
+                let gap = events[i].timestamp.timeIntervalSince(events[i - 1].timestamp)
+                guard gap <= 12 * 3600 else { continue }
+                let day = cal.startOfDay(for: events[i].timestamp)
+                let offset = cal.dateComponents([.day], from: day, to: today).day ?? 99
+                if (0..<7).contains(offset) { buckets[6 - offset] += gap }
+            }
+        }
+        return buckets
+    }
+
+    private var weekSummary: String {
+        let days = weekWork.filter { $0 > 0 }.count
+        let mins = Int(weekWork.reduce(0, +) / 60)
+        guard mins > 0 else { return "No stitching logged yet" }
+        let time = mins >= 60 ? "\(mins / 60)h \(mins % 60)m" : "\(mins)m"
+        return "\(days) day\(days == 1 ? "" : "s") · \(time) on the needles"
+    }
+
+    private var weekBarHeights: [CGFloat] {
+        let peak = max(weekWork.max() ?? 0, 1)
+        return weekWork.map { CGFloat(6 + 22 * ($0 / peak)) }
+    }
+
     private var streakStrip: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
@@ -100,14 +130,14 @@ struct HomeView: View {
                     .font(.system(size: 9.5, weight: .regular, design: .monospaced))
                     .foregroundStyle(Color.skeinCream2.opacity(0.7))
                     .kerning(1.8)
-                Text("4 days · 6h 12m on the needles")
+                Text(weekSummary)
                     .font(Font.custom("Helvetica Neue", size: 15).weight(.semibold))
                     .foregroundStyle(Color.skeinCream)
             }
             Spacer()
             // Mini bar chart
             HStack(alignment: .bottom, spacing: 4) {
-                ForEach(Array([12, 22, 18, 28, 8, 24, 14].enumerated()), id: \.offset) { i, h in
+                ForEach(Array(weekBarHeights.enumerated()), id: \.offset) { i, h in
                     RoundedRectangle(cornerRadius: 2)
                         .fill(i == 6 ? Color.skeinTangerine : Color.skeinCream2.opacity(0.55))
                         .frame(width: 5, height: CGFloat(h))

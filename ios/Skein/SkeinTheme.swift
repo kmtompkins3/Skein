@@ -123,3 +123,36 @@ struct TagNumberBadge: View {
         .frame(width: 32, height: 32)
     }
 }
+
+// MARK: — Skein wordmark ("Ske" + dotted i + "n")
+struct SkeinWordmark: View {
+    var size: CGFloat = 20
+    var color: Color = .skeinCharcoal
+    var dot: Color = .skeinTangerine
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("Ske")
+            Text("i")
+                .hidden()
+                .overlay(alignment: .top) {
+                    ZStack(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(color)
+                            .frame(width: size * 0.07, height: size * 0.62)
+                            .offset(y: size * 0.3)
+                        Circle()
+                            .fill(dot)
+                            .frame(width: size * 0.22, height: size * 0.22)
+                            .offset(y: size * 0.06)
+                    }
+                }
+            Text("n")
+        }
+        .font(Font.custom("Helvetica Neue", size: size).weight(.bold))
+        .tracking(-size * 0.025)
+        .foregroundStyle(color)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Skein")
+    }
+}
